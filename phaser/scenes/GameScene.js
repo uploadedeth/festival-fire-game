@@ -29,6 +29,9 @@ class GameScene extends Phaser.Scene {
     create() {
         console.log('🎮 Game Scene started');
         
+        // Initialize game ending flag
+        this.gameEnding = false;
+        
         // Create background
         this.createBackground();
         
@@ -249,8 +252,11 @@ class GameScene extends Phaser.Scene {
     update(time, delta) {
         if (!this.gameData.isActive) return;
         
-        // Update entities
-        if (this.firefighter) {
+        // Additional safety check - if game is ending, don't update anything
+        if (this.gameEnding) return;
+        
+        // Update entities with safety checks
+        if (this.firefighter && this.firefighter.update) {
             this.firefighter.update(time, delta);
         }
         
@@ -356,19 +362,14 @@ class GameScene extends Phaser.Scene {
     gameOver() {
         if (!this.gameData.isActive) return;
         
+        // Set ending flag to prevent further updates
+        this.gameEnding = true;
         this.gameData.isActive = false;
         
         console.log(`🏁 Game Over! Final Score: ${this.gameData.score}`);
-        console.log('🏁 Preparing to show Game Over Scene...');
+        console.log('🏁 Showing Game Over Overlay...');
         
-        // Store game data before cleanup
-        const gameResults = {
-            finalScore: this.gameData.score,
-            firesExtinguished: Math.floor(this.gameData.score / 15),
-            timeElapsed: 60
-        };
-        
-        // Stop timers only
+        // Stop all timers immediately
         if (this.gameTimer) {
             this.gameTimer.destroy();
             this.gameTimer = null;
@@ -382,6 +383,9 @@ class GameScene extends Phaser.Scene {
             this.uiUpdateTimer = null;
         }
         
+        // Stop physics updates
+        this.physics.pause();
+        
         // Stop audio
         if (window.GameManagers.audio) {
             try {
@@ -392,7 +396,7 @@ class GameScene extends Phaser.Scene {
             }
         }
         
-        // Notify UI
+        // Notify UI to hide game elements
         if (window.GameManagers.ui) {
             try {
                 window.GameManagers.ui.setGameActive(false);
@@ -401,9 +405,217 @@ class GameScene extends Phaser.Scene {
             }
         }
         
-        // Immediate transition - let Phaser handle entity cleanup
-        console.log('🏁 Starting GameOverScene transition...');
-        this.scene.start('GameOverScene', gameResults);
+        // Show game over overlay
+        this.showGameOverOverlay();
+    }
+    
+    showGameOverOverlay() {
+        // Create dark overlay
+        const overlay = this.add.rectangle(512, 384, 1024, 768, 0x000000, 0.8);
+        overlay.setDepth(1000); // On top of everything
+        
+        // Game Over Title
+        const gameOverTitle = this.add.text(512, 200, 'Time\'s Up!', {
+            fontSize: '64px',
+            fill: '#4A90E2',
+            fontFamily: 'Arial, sans-serif',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 6,
+            shadow: {
+                offsetX: 4,
+                offsetY: 4,
+                color: '#000000',
+                blur: 8,
+                fill: true
+            }
+        }).setOrigin(0.5).setDepth(1001);
+        
+        // Subtitle
+        const subtitle = this.add.text(512, 260, 'The festival has ended!', {
+            fontSize: '24px',
+            fill: '#4ECDC4',
+            fontFamily: 'Arial, sans-serif',
+            stroke: '#000000',
+            strokeThickness: 2,
+            shadow: {
+                offsetX: 2,
+                offsetY: 2,
+                color: '#000000',
+                blur: 4,
+                fill: true
+            }
+        }).setOrigin(0.5).setDepth(1001);
+        
+        // Score container
+        const scoreBg = this.add.rectangle(512, 350, 400, 120, 0x000000, 0.9);
+        scoreBg.setStrokeStyle(4, 0xFFD700);
+        scoreBg.setDepth(1001);
+        
+        // Final Score label
+        const scoreLabel = this.add.text(512, 320, 'FINAL SCORE', {
+            fontSize: '24px',
+            fill: '#FFD700',
+            fontFamily: 'Arial, sans-serif',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(1002);
+        
+        // Score value
+        const scoreValue = this.add.text(512, 360, this.gameData.score.toString(), {
+            fontSize: '56px',
+            fill: '#4ECDC4',
+            fontFamily: 'Arial, sans-serif',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 3,
+            shadow: {
+                offsetX: 3,
+                offsetY: 3,
+                color: '#000000',
+                blur: 6,
+                fill: true
+            }
+        }).setOrigin(0.5).setDepth(1002);
+        
+        // Play Again button
+        const playAgainButton = this.add.rectangle(412, 480, 200, 60, 0x4A90E2);
+        playAgainButton.setStrokeStyle(4, 0x000000);
+        playAgainButton.setDepth(1001);
+        
+        const playAgainText = this.add.text(412, 480, 'PLAY AGAIN', {
+            fontSize: '20px',
+            fill: '#FFFFFF',
+            fontFamily: 'Arial, sans-serif',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5).setDepth(1002);
+        
+        // Main Menu button
+        const menuButton = this.add.rectangle(612, 480, 200, 60, 0x666666);
+        menuButton.setStrokeStyle(4, 0x999999);
+        menuButton.setDepth(1001);
+        
+        const menuText = this.add.text(612, 480, 'MAIN MENU', {
+            fontSize: '20px',
+            fill: '#FFFFFF',
+            fontFamily: 'Arial, sans-serif',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 2
+        }).setOrigin(0.5).setDepth(1002);
+        
+        // Make buttons interactive
+        playAgainButton.setInteractive({ useHandCursor: true });
+        menuButton.setInteractive({ useHandCursor: true });
+        
+        // Play Again button interactions
+        playAgainButton.on('pointerover', () => {
+            playAgainButton.setFillStyle(0x357ABD);
+            this.tweens.add({
+                targets: [playAgainButton, playAgainText],
+                scaleX: 1.1,
+                scaleY: 1.1,
+                duration: 200,
+                ease: 'Back.easeOut'
+            });
+        });
+        
+        playAgainButton.on('pointerout', () => {
+            playAgainButton.setFillStyle(0x4A90E2);
+            this.tweens.add({
+                targets: [playAgainButton, playAgainText],
+                scaleX: 1,
+                scaleY: 1,
+                duration: 200,
+                ease: 'Back.easeOut'
+            });
+        });
+        
+        playAgainButton.on('pointerdown', () => {
+            this.restartGame();
+        });
+        
+        // Main Menu button interactions
+        menuButton.on('pointerover', () => {
+            menuButton.setFillStyle(0x888888);
+            this.tweens.add({
+                targets: [menuButton, menuText],
+                scaleX: 1.1,
+                scaleY: 1.1,
+                duration: 200,
+                ease: 'Back.easeOut'
+            });
+        });
+        
+        menuButton.on('pointerout', () => {
+            menuButton.setFillStyle(0x666666);
+            this.tweens.add({
+                targets: [menuButton, menuText],
+                scaleX: 1,
+                scaleY: 1,
+                duration: 200,
+                ease: 'Back.easeOut'
+            });
+        });
+        
+        menuButton.on('pointerdown', () => {
+            this.goToMainMenu();
+        });
+        
+        // Keyboard controls
+        this.input.keyboard.once('keydown-ENTER', () => {
+            this.restartGame();
+        });
+        
+        this.input.keyboard.once('keydown-ESC', () => {
+            this.goToMainMenu();
+        });
+        
+        // Add glow effect to score
+        this.tweens.add({
+            targets: scoreValue,
+            alpha: 0.8,
+            duration: 1500,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+        
+        // Title animation
+        this.tweens.add({
+            targets: gameOverTitle,
+            scaleX: 1.05,
+            scaleY: 1.05,
+            duration: 2000,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+    }
+    
+    restartGame() {
+        console.log('🔄 Restarting game...');
+        
+        // Play sound effect
+        if (window.GameManagers.audio) {
+            window.GameManagers.audio.playMenuSound();
+        }
+        
+        // Restart the current scene
+        this.scene.restart();
+    }
+    
+    goToMainMenu() {
+        console.log('📋 Going to main menu...');
+        
+        // Play sound effect
+        if (window.GameManagers.audio) {
+            window.GameManagers.audio.playMenuSound();
+        }
+        
+        // Go to menu scene
+        this.scene.start('MenuScene');
     }
     
     togglePause() {
