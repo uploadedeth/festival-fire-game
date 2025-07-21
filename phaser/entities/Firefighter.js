@@ -33,6 +33,15 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         this.sprayDuration = 0;
         this.maxSprayDuration = 2000; // 2 seconds max continuous spray
         
+        // Water tank properties
+        this.maxWater = 100; // Total water capacity
+        this.currentWater = 100; // Current water amount
+        this.waterRegenRate = 15; // Water regen per second when not spraying
+        this.waterConsumptionRate = 30; // Water consumption per second when spraying
+        
+        // Create water bar UI
+        this.createWaterBar();
+        
         // Visual properties
         this.originalScale = 1;
         this.flashTint = false;
@@ -168,10 +177,77 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         }
     }
     
+    createWaterBar() {
+        // Create water bar container in bottom left - bigger size
+        this.waterBarContainer = this.scene.add.container(100, 700);
+        
+        // Background for water bar - bigger dimensions
+        this.waterBarBg = this.scene.add.graphics();
+        this.waterBarBg.fillStyle(0x2c3e50, 0.8);
+        this.waterBarBg.fillRoundedRect(-90, -35, 180, 70, 10);
+        this.waterBarBg.lineStyle(2, 0x34495e);
+        this.waterBarBg.strokeRoundedRect(-90, -35, 180, 70, 10);
+        this.waterBarContainer.add(this.waterBarBg);
+        
+        // Water bar title - bigger font
+        this.waterBarTitle = this.scene.add.text(0, -45, 'WATER', {
+            fontSize: '16px',
+            fontFamily: 'Arial, sans-serif',
+            fill: '#ecf0f1',
+            align: 'center',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+        this.waterBarContainer.add(this.waterBarTitle);
+        
+        // Create water bubbles (10 bubbles total) - bigger bubbles
+        this.waterBubbles = [];
+        const bubbleCount = 10;
+        const bubbleSize = 12; // Increased from 8 to 12
+        const bubbleSpacing = 16; // Increased from 12 to 16
+        const startX = -(bubbleCount * bubbleSpacing) / 2 + bubbleSpacing / 2;
+        
+        for (let i = 0; i < bubbleCount; i++) {
+            const x = startX + (i * bubbleSpacing);
+            const y = -5; // Moved up slightly
+            
+            // Bubble background (empty) - bigger stroke
+            const bubbleBg = this.scene.add.graphics();
+            bubbleBg.lineStyle(2, 0x3498db, 0.5);
+            bubbleBg.strokeCircle(x, y, bubbleSize / 2);
+            this.waterBarContainer.add(bubbleBg);
+            
+            // Bubble fill (water) - bigger fill
+            const bubbleFill = this.scene.add.graphics();
+            bubbleFill.fillStyle(0x3498db, 0.8);
+            bubbleFill.fillCircle(x, y, bubbleSize / 2);
+            this.waterBarContainer.add(bubbleFill);
+            
+            this.waterBubbles.push({
+                background: bubbleBg,
+                fill: bubbleFill,
+                x: x,
+                y: y
+            });
+        }
+        
+        // Water percentage text - bigger font
+        this.waterPercentText = this.scene.add.text(0, 20, '100%', {
+            fontSize: '14px',
+            fontFamily: 'Arial, sans-serif',
+            fill: '#3498db',
+            align: 'center',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+        this.waterBarContainer.add(this.waterPercentText);
+        
+        console.log('💧 Water bar UI created');
+    }
+    
     update(time, delta) {
         this.handleInput();
         this.updateMovement(delta);
         this.updateWaterSpray(delta);
+        this.updateWaterBar(); // Added this line
         this.updateAnimations();
         this.constrainPosition();
     }
@@ -251,36 +327,74 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
     }
     
     updateWaterSpray(delta) {
-        // Handle water spraying
-        if (this.inputState.spray && this.sprayDuration < this.maxSprayDuration) {
+        // Update water levels
+        if (this.inputState.spray && this.currentWater > 0) {
+            // Consuming water while spraying
             this.isSpraying = true;
-            this.sprayDuration += delta;
+            this.currentWater = Math.max(0, this.currentWater - (this.waterConsumptionRate * delta / 1000));
             this.sprayTimer += delta;
             
-            // Spawn water particles
-            if (this.sprayTimer >= this.sprayInterval) {
+            // Spawn water particles if we have water
+            if (this.sprayTimer >= this.sprayInterval && this.currentWater > 0) {
                 this.createWaterParticle();
                 this.sprayTimer = 0;
-                
-                // Temporarily disable water spray particle effects
-                console.log('💧 Water spray (effects disabled temporarily)');
-                
-                /*
-                // Create water spray particle effect
-                if (window.GameManagers.particle) {
-                    const sprayX = this.x + (this.facing === 'right' ? 20 : -20);
-                    const sprayY = this.y - 10;
-                    window.GameManagers.particle.createWaterSpray(sprayX, sprayY, this.facing);
-                }
-                */
             }
         } else {
+            // Regenerate water when not spraying
             this.isSpraying = false;
-            
-            // Reset spray duration when not spraying
-            if (!this.inputState.spray) {
-                this.sprayDuration = Math.max(0, this.sprayDuration - delta * 2);
+            if (this.currentWater < this.maxWater) {
+                this.currentWater = Math.min(this.maxWater, this.currentWater + (this.waterRegenRate * delta / 1000));
             }
+        }
+    }
+    
+    updateWaterBar() {
+        if (!this.waterBubbles || !this.waterPercentText) return;
+        
+        // Calculate water percentage
+        const waterPercent = (this.currentWater / this.maxWater) * 100;
+        
+        // Update percentage text
+        this.waterPercentText.setText(`${Math.round(waterPercent)}%`);
+        
+        // Update bubble visibility based on water level
+        const bubblesActive = Math.ceil((this.currentWater / this.maxWater) * this.waterBubbles.length);
+        
+        this.waterBubbles.forEach((bubble, index) => {
+            if (index < bubblesActive) {
+                // Show filled bubble
+                bubble.fill.setVisible(true);
+                bubble.fill.setAlpha(1);
+            } else {
+                // Show empty bubble
+                bubble.fill.setVisible(false);
+            }
+        });
+        
+        // Change color based on water level
+        let fillColor = 0x3498db; // Blue (normal)
+        if (waterPercent < 30) {
+            fillColor = 0xe74c3c; // Red (low)
+        } else if (waterPercent < 60) {
+            fillColor = 0xf39c12; // Orange (medium)
+        }
+        
+        // Update active bubbles with the appropriate color
+        this.waterBubbles.forEach((bubble, index) => {
+            if (index < bubblesActive) {
+                bubble.fill.clear();
+                bubble.fill.fillStyle(fillColor, 0.8);
+                bubble.fill.fillCircle(bubble.x, bubble.y, 6); // Increased from 4 to 6 for bigger bubbles
+            }
+        });
+        
+        // Update percentage text color
+        if (waterPercent < 30) {
+            this.waterPercentText.setColor('#e74c3c');
+        } else if (waterPercent < 60) {
+            this.waterPercentText.setColor('#f39c12');
+        } else {
+            this.waterPercentText.setColor('#3498db');
         }
     }
     
@@ -340,6 +454,9 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         this.sprayDuration = 0;
         this.sprayTimer = 0;
         
+        // Reset water levels
+        this.currentWater = this.maxWater;
+        
         // Clear all water particles
         this.waterParticles.clear(true, true);
         
@@ -377,6 +494,14 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
     destroy() {
         // Clean up water particles
         this.waterParticles.clear(true, true);
+        
+        // Clean up water bar UI
+        if (this.waterBarContainer) {
+            this.waterBarContainer.destroy();
+            this.waterBarContainer = null;
+        }
+        this.waterBubbles = null;
+        this.waterPercentText = null;
         
         // Remove mobile event listeners
         this.removeMobileControls();
