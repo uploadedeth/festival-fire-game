@@ -186,12 +186,12 @@ class GameScene extends Phaser.Scene {
             return; // Too many fires
         }
         
-        // Random position on the stage platform area (scaled for new canvas size)
-        // Expand to cover full stage width from left to right
-        const stageLeft = 50;    // Much wider left edge
-        const stageRight = 974;  // Much wider right edge (1024 - 50)
-        const stageTop = 250;    // Top of stage area (where the palace structures are)
-        const stageBottom = 450; // Bottom of stage area (platform level)
+        // Random position ONLY on the actual stage platform (not sky/mountains)
+        // Based on the image, the stage platform is roughly in the center area
+        const stageLeft = 200;   // Start of actual stage platform
+        const stageRight = 824;  // End of actual stage platform  
+        const stageTop = 320;    // Top of stage platform (below the palace structures)
+        const stageBottom = 420; // Bottom of stage platform (above the ground)
         
         const x = stageLeft + Math.random() * (stageRight - stageLeft - 40);
         const y = stageTop + Math.random() * (stageBottom - stageTop - 30);

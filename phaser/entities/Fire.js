@@ -259,11 +259,12 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
     }
     
     constrainPosition() {
-        // Keep fire within expanded stage area bounds (full width)
-        const stageLeft = 50;
-        const stageRight = 974;
-        const stageTop = 250;
-        const stageBottom = 450;
+        // Keep fire within the actual stage platform bounds (not sky/mountains)
+        // Based on the background image, the stage platform is in the center
+        const stageLeft = 200;   // Start of actual stage platform
+        const stageRight = 824;  // End of actual stage platform
+        const stageTop = 320;    // Top of stage platform (below palace structures)
+        const stageBottom = 420; // Bottom of stage platform (above ground)
         
         // Simply constrain position without any velocity changes
         if (this.x < stageLeft) {
@@ -399,11 +400,11 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
         const newX = this.x + Math.cos(angle) * spreadDistance;
         const newY = this.y + Math.sin(angle) * spreadDistance;
         
-        // Check if position is valid within expanded stage bounds
-        const stageLeft = 50;
-        const stageRight = 974;
-        const stageTop = 250;
-        const stageBottom = 450;
+        // Check if position is valid within the actual stage platform bounds
+        const stageLeft = 200;   // Start of actual stage platform
+        const stageRight = 824;  // End of actual stage platform
+        const stageTop = 320;    // Top of stage platform (below palace structures)
+        const stageBottom = 420; // Bottom of stage platform (above ground)
         
         if (newX >= stageLeft && newX <= stageRight - 40 && 
             newY >= stageTop && newY <= stageBottom - 30) {
