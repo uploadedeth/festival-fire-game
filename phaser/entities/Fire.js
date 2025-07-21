@@ -501,40 +501,115 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
     }
     
     createHealthBar() {
-        // Create health bar background
-        this.healthBarBg = this.scene.add.rectangle(this.x, this.y - 40, 32, 4, 0x000000, 0.8);
-        this.healthBarBg.setOrigin(0, 0.5);
+        // Create segmented health bar based on fire type
+        const barWidth = 40; // Total width of health bar
+        const barHeight = 6; // Height of health bar
+        const segmentGap = 1; // Gap between segments (dark separator)
         
-        // Create health bar fill
-        this.healthBarFill = this.scene.add.rectangle(this.x, this.y - 40, 32, 4, 0xff0000, 1);
-        this.healthBarFill.setOrigin(0, 0.5);
+        // Calculate segment dimensions based on health
+        const totalSegments = this.maxHealth;
+        const segmentWidth = (barWidth - (segmentGap * (totalSegments - 1))) / totalSegments;
         
-        // Update health bar display
-        this.updateHealthBar();
+        // Create background container for the health bar
+        this.healthBarBg = this.scene.add.graphics();
+        this.healthBarBg.fillStyle(0x000000, 0.8);
+        this.healthBarBg.fillRoundedRect(-barWidth/2, -2, barWidth, barHeight + 4, 2);
+        this.healthBarBg.lineStyle(1, 0x333333);
+        this.healthBarBg.strokeRoundedRect(-barWidth/2, -2, barWidth, barHeight + 4, 2);
+        
+        // Create individual health segments
+        this.healthSegments = [];
+        for (let i = 0; i < totalSegments; i++) {
+            const segmentX = -barWidth/2 + 1 + (i * (segmentWidth + segmentGap));
+            const segmentY = 0;
+            
+            // Create health segment
+            const segment = this.scene.add.graphics();
+            segment.fillStyle(this.getSegmentColor(i, totalSegments), 1);
+            segment.fillRect(segmentX, segmentY, segmentWidth, barHeight);
+            
+            this.healthSegments.push({
+                graphics: segment,
+                x: segmentX,
+                y: segmentY,
+                width: segmentWidth,
+                height: barHeight,
+                index: i
+            });
+        }
+        
+        // Position health bar above fire
+        this.updateHealthBarPosition();
+        
+        console.log(`💚 Created ${totalSegments}-segment health bar for ${this.fireSize} fire`);
+    }
+    
+    getSegmentColor(index, totalSegments) {
+        // Color segments differently based on their position (like LoL)
+        const healthPercent = (totalSegments - index) / totalSegments;
+        
+        if (healthPercent > 0.66) {
+            return 0x00ff00; // Green for high health segments
+        } else if (healthPercent > 0.33) {
+            return 0xffff00; // Yellow for medium health segments
+        } else {
+            return 0xff0000; // Red for low health segments
+        }
     }
     
     updateHealthBar() {
-        if (this.healthBarBg && this.healthBarFill) {
-            // Position health bar above fire
-            const barX = this.x - 16; // Center the bar
-            const barY = this.y - 40;
+        if (!this.healthBarBg || !this.healthSegments) return;
+        
+        // Position health bar above fire
+        this.updateHealthBarPosition();
+        
+        // Update segment visibility based on current health
+        for (let i = 0; i < this.healthSegments.length; i++) {
+            const segment = this.healthSegments[i];
             
-            this.healthBarBg.setPosition(barX, barY);
-            this.healthBarFill.setPosition(barX, barY);
-            
-            // Update health bar width based on current health
-            const healthPercent = this.health / this.maxHealth;
-            this.healthBarFill.setScale(healthPercent, 1);
-            
-            // Change color based on health
-            if (healthPercent > 0.6) {
-                this.healthBarFill.setFillStyle(0x00ff00); // Green
-            } else if (healthPercent > 0.3) {
-                this.healthBarFill.setFillStyle(0xffff00); // Yellow
+            if (i < this.health) {
+                // Show active health segment
+                segment.graphics.setVisible(true);
+                segment.graphics.setAlpha(1);
+                
+                // Update color based on remaining health percentage
+                const healthPercent = this.health / this.maxHealth;
+                let segmentColor;
+                
+                if (healthPercent > 0.66) {
+                    segmentColor = 0x00ff00; // Green
+                } else if (healthPercent > 0.33) {
+                    segmentColor = 0xffff00; // Yellow
+                } else {
+                    segmentColor = 0xff0000; // Red
+                }
+                
+                // Redraw segment with current color
+                segment.graphics.clear();
+                segment.graphics.fillStyle(segmentColor, 1);
+                segment.graphics.fillRect(segment.x, segment.y, segment.width, segment.height);
+                
             } else {
-                this.healthBarFill.setFillStyle(0xff0000); // Red
+                // Hide depleted health segment
+                segment.graphics.setVisible(false);
             }
         }
+    }
+    
+    updateHealthBarPosition() {
+        if (!this.healthBarBg || !this.healthSegments) return;
+        
+        // Position health bar above fire
+        const barX = this.x;
+        const barY = this.y - 45; // Slightly higher for better visibility
+        
+        // Position background
+        this.healthBarBg.setPosition(barX, barY);
+        
+        // Position all segments
+        this.healthSegments.forEach(segment => {
+            segment.graphics.setPosition(barX, barY);
+        });
     }
     
     destroy() {
@@ -547,11 +622,23 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
                 window.GameManagers.particle.stopFireEffect(this.x, this.y);
             }
             
-            // Clean up health bar
+            // Clean up segmented health bar
             if (this.healthBarBg) {
                 this.healthBarBg.destroy();
                 this.healthBarBg = null;
             }
+            
+            // Clean up all health segments
+            if (this.healthSegments) {
+                this.healthSegments.forEach(segment => {
+                    if (segment.graphics) {
+                        segment.graphics.destroy();
+                    }
+                });
+                this.healthSegments = null;
+            }
+            
+            // Legacy cleanup (in case old health bar exists)
             if (this.healthBarFill) {
                 this.healthBarFill.destroy();
                 this.healthBarFill = null;
