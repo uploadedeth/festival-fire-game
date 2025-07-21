@@ -133,7 +133,10 @@ class WaterParticle extends Phaser.Physics.Arcade.Sprite {
     preUpdate(time, delta) {
         super.preUpdate(time, delta);
         
-        if (!this.active) return;
+        // Safety check - don't update if inactive or physics is disabled
+        if (!this.active || (this.body && !this.body.enable)) {
+            return;
+        }
         
         // Update age
         this.age += delta;

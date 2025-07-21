@@ -235,7 +235,10 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
     }
     
     update(time, delta) {
-        if (this.isExtinguished) return;
+        // Safety check - don't update if fire is inactive or physics is disabled
+        if (!this.active || (this.body && !this.body.enable)) {
+            return;
+        }
         
         // Handle falling behavior
         this.updateFalling(delta);
@@ -252,6 +255,11 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
     }
     
     updateFalling(delta) {
+        // Safety check - don't try to update physics if body is disabled
+        if (!this.body || !this.body.enable) {
+            return;
+        }
+        
         if (this.isFalling && !this.hasFallen) {
             // Check if fire has reached the bottom
             if (this.y >= this.targetY) {

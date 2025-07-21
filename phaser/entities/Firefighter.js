@@ -269,6 +269,11 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
     }
     
     update(time, delta) {
+        // Safety check - don't update if firefighter is inactive or physics is disabled
+        if (!this.active || (this.body && !this.body.enable)) {
+            return;
+        }
+        
         this.handleInput();
         this.updateMovement(delta);
         this.updateWaterSpray(delta);
