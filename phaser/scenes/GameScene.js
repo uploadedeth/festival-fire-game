@@ -86,8 +86,8 @@ class GameScene extends Phaser.Scene {
             this.firefighter.destroy();
         }
         
-        // Create firefighter on ground level (gray ground area at bottom) - scaled for new canvas
-        this.firefighter = new Firefighter(this, 512, 680);
+        // Create firefighter on ground level (lower position on canvas)
+        this.firefighter = new Firefighter(this, 512, 720);
         
         // Clear any existing fires
         if (this.fires) {
@@ -361,34 +361,49 @@ class GameScene extends Phaser.Scene {
         console.log(`🏁 Game Over! Final Score: ${this.gameData.score}`);
         console.log('🏁 Preparing to show Game Over Scene...');
         
-        // Stop all timers
-        if (this.gameTimer) this.gameTimer.destroy();
-        if (this.fireSpawnTimer) this.fireSpawnTimer.destroy();
-        if (this.uiUpdateTimer) this.uiUpdateTimer.destroy();
+        // Store game data before cleanup
+        const gameResults = {
+            finalScore: this.gameData.score,
+            firesExtinguished: Math.floor(this.gameData.score / 15),
+            timeElapsed: 60
+        };
         
-        // Stop ambient sound
-        if (window.GameManagers.audio) {
-            window.GameManagers.audio.stopAmbientSound();
-            window.GameManagers.audio.playGameOverSound();
+        // Stop timers only
+        if (this.gameTimer) {
+            this.gameTimer.destroy();
+            this.gameTimer = null;
+        }
+        if (this.fireSpawnTimer) {
+            this.fireSpawnTimer.destroy();
+            this.fireSpawnTimer = null;
+        }
+        if (this.uiUpdateTimer) {
+            this.uiUpdateTimer.destroy();
+            this.uiUpdateTimer = null;
         }
         
-        // Stop all particle effects
-        if (window.GameManagers.particle) {
-            window.GameManagers.particle.stopAllEffects();
+        // Stop audio
+        if (window.GameManagers.audio) {
+            try {
+                window.GameManagers.audio.stopAmbientSound();
+                window.GameManagers.audio.playGameOverSound();
+            } catch (e) {
+                console.warn('Audio cleanup failed:', e);
+            }
         }
         
         // Notify UI
         if (window.GameManagers.ui) {
-            window.GameManagers.ui.setGameActive(false);
+            try {
+                window.GameManagers.ui.setGameActive(false);
+            } catch (e) {
+                console.warn('UI cleanup failed:', e);
+            }
         }
         
-        // Immediate transition to game over scene
+        // Immediate transition - let Phaser handle entity cleanup
         console.log('🏁 Starting GameOverScene transition...');
-        this.scene.start('GameOverScene', {
-            finalScore: this.gameData.score,
-            firesExtinguished: Math.floor(this.gameData.score / 15), // Estimate based on average points
-            timeElapsed: 60 // Fixed 60 seconds
-        });
+        this.scene.start('GameOverScene', gameResults);
     }
     
     togglePause() {
@@ -432,14 +447,5 @@ class GameScene extends Phaser.Scene {
     
     getGameData() {
         return this.gameData;
-    }
-    
-    destroy() {
-        // Clean up
-        if (this.gameTimer) this.gameTimer.destroy();
-        if (this.fireSpawnTimer) this.fireSpawnTimer.destroy();
-        if (this.uiUpdateTimer) this.uiUpdateTimer.destroy();
-        
-        super.destroy();
     }
 } 

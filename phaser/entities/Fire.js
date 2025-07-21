@@ -2,9 +2,8 @@
 
 class Fire extends Phaser.Physics.Arcade.Sprite {
     constructor(scene, x, y, size = 'medium') {
-        // Choose texture based on size
-        const textureKey = `fire-${size}`;
-        super(scene, x, y, textureKey);
+        // Use the fire sprite sheet
+        super(scene, x, y, 'fire');
         
         // Add to scene and physics
         scene.add.existing(this);
@@ -16,6 +15,7 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
         this.setupPhysics();
         this.setupMovement();
         this.setupEffects();
+        this.setupAnimation();
         
         console.log(`🔥 ${size} fire created at (${x}, ${y})`);
     }
@@ -82,19 +82,19 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
     }
     
     setupMovement() {
-        // Random movement properties - reduced for stability
+        // Remove all movement - fires stay static
         this.moveTimer = 0;
-        this.moveInterval = 2000 + Math.random() * 3000; // Slower movement changes
-        this.moveSpeed = 10 + Math.random() * 15; // Reduced speed
-        this.movementDirection = (Math.random() - 0.5) * 2; // -1 to 1
+        this.moveInterval = 0;
+        this.moveSpeed = 0;
+        this.movementDirection = 0;
         
-        // Original position for tethering
+        // Original position for reference
         this.originalX = this.x;
         this.originalY = this.y;
-        this.maxWanderDistance = 30 + Math.random() * 20; // Reduced wander distance
+        this.maxWanderDistance = 0; // No wandering
         
-        // Start movement with reduced intensity
-        this.startRandomMovement();
+        // No movement - fires are completely static
+        console.log('🔥 Fire movement disabled - static fire');
     }
     
     setupEffects() {
@@ -108,17 +108,86 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
         this.startFireSounds();
     }
     
+    setupAnimation() {
+        // Start the appropriate fire animation based on size
+        const animationKey = `fire-${this.fireSize}`;
+        
+        // Check if animation exists
+        if (this.scene.anims.exists(animationKey)) {
+            this.play(animationKey);
+            console.log(`🎭 Playing fire animation: ${animationKey}`);
+        } else {
+            console.warn(`⚠️ Fire animation '${animationKey}' does not exist - creating fallback`);
+            // Try to create animations if they don't exist
+            this.createFallbackFireAnimations();
+            
+            // Try again after creating fallback
+            if (this.scene.anims.exists(animationKey)) {
+                this.play(animationKey);
+            } else {
+                // Ultimate fallback to first frame
+                this.setFrame(0);
+            }
+        }
+        
+        // Set consistent scale for all fire sizes - no size variation to prevent glitching
+        this.setScale(2.0); // Fixed scale for all fires for clean appearance
+        
+        // Ensure fire is fully visible and clean
+        this.setAlpha(1);
+        this.setVisible(true);
+        this.setTint(0xffffff);
+        
+        // Fix origin for consistent positioning
+        this.setOrigin(0.5, 1); // Bottom center origin for ground placement
+    }
+    
+    createFallbackFireAnimations() {
+        // Create simple animations using the first few frames
+        if (!this.textures.exists('fire')) {
+            console.warn('⚠️ Fire texture does not exist');
+            return;
+        }
+        
+        try {
+            const texture = this.textures.get('fire');
+            const frameCount = texture.frameTotal;
+            console.log(`🔥 Creating fallback fire animations with ${frameCount} frames`);
+            
+            // Create basic animations using available frames
+            if (frameCount >= 4) {
+                this.scene.anims.create({
+                    key: 'fire-small',
+                    frames: this.scene.anims.generateFrameNumbers('fire', { start: 0, end: Math.min(3, frameCount - 1) }),
+                    frameRate: 8,
+                    repeat: -1
+                });
+                
+                this.scene.anims.create({
+                    key: 'fire-medium',
+                    frames: this.scene.anims.generateFrameNumbers('fire', { start: 0, end: Math.min(3, frameCount - 1) }),
+                    frameRate: 8,
+                    repeat: -1
+                });
+                
+                this.scene.anims.create({
+                    key: 'fire-large',
+                    frames: this.scene.anims.generateFrameNumbers('fire', { start: 0, end: Math.min(3, frameCount - 1) }),
+                    frameRate: 8,
+                    repeat: -1
+                });
+                
+                console.log('✅ Fallback fire animations created');
+            }
+        } catch (error) {
+            console.error('❌ Error creating fallback fire animations:', error);
+        }
+    }
+    
     startRandomMovement() {
-        // Gentle, smooth movement - less chaotic
-        this.movementTween = this.scene.tweens.add({
-            targets: this,
-            x: this.originalX + (Math.random() - 0.5) * 40, // Small movement range
-            duration: 3000 + Math.random() * 2000, // Slow movement
-            ease: 'Sine.easeInOut',
-            yoyo: true,
-            repeat: -1,
-            delay: Math.random() * 1000 // Random start delay
-        });
+        // No movement - fires are completely static
+        console.log('🔥 Fire is static - no movement tweens');
+        // Remove all movement tweens
     }
     
     startFireAnimation() {
@@ -184,18 +253,26 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
         
         if (this.x < stageLeft) {
             this.setX(stageLeft);
-            this.setVelocityX(Math.abs(this.body.velocity.x));
+            if (this.body && this.body.velocity) {
+                this.setVelocityX(Math.abs(this.body.velocity.x));
+            }
         } else if (this.x > stageRight - 40) {
             this.setX(stageRight - 40);
-            this.setVelocityX(-Math.abs(this.body.velocity.x));
+            if (this.body && this.body.velocity) {
+                this.setVelocityX(-Math.abs(this.body.velocity.x));
+            }
         }
         
         if (this.y < stageTop) {
             this.setY(stageTop);
-            this.setVelocityY(Math.abs(this.body.velocity.y));
+            if (this.body && this.body.velocity) {
+                this.setVelocityY(Math.abs(this.body.velocity.y));
+            }
         } else if (this.y > stageBottom - 30) {
             this.setY(stageBottom - 30);
-            this.setVelocityY(-Math.abs(this.body.velocity.y));
+            if (this.body && this.body.velocity) {
+                this.setVelocityY(-Math.abs(this.body.velocity.y));
+            }
         }
     }
     
@@ -214,9 +291,9 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
         this.damageFlash = 0; // No flash
         this.setTint(0xffffff); // No blue flash
         
-        // Physical reaction - keep minimal and reduce jumping
-        const reactionForce = (Math.random() - 0.5) * 30; // Reduced horizontal force
-        this.setVelocity(reactionForce, -5); // Much reduced vertical jump
+        // No physical reaction - fire stays completely static
+        // Remove all jumping and movement effects
+        this.setVelocity(0, 0); // No movement at all
         
         // No screen shake - keep it static like vanilla
         
@@ -342,7 +419,18 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
     }
     
     getBounds() {
-        // Return collision bounds
+        // Return collision bounds - with safety checks
+        if (!this.body) {
+            // Return default bounds based on fire size
+            const defaultSize = this.fireSize === 'large' ? 32 : this.fireSize === 'medium' ? 24 : 16;
+            return new Phaser.Geom.Rectangle(
+                this.x - defaultSize / 2,
+                this.y - defaultSize / 2,
+                defaultSize,
+                defaultSize
+            );
+        }
+        
         return new Phaser.Geom.Rectangle(
             this.x - this.body.width / 2,
             this.y - this.body.height / 2,
@@ -401,20 +489,26 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
     }
     
     destroy() {
-        // Clean up effects
-        this.stopAllTweens();
-        
-        // Stop particle effects
-        if (window.GameManagers.particle && !this.isExtinguished) {
-            window.GameManagers.particle.stopFireEffect(this.x, this.y);
-        }
-        
-        // Clean up health bar
-        if (this.healthBarBg) {
-            this.healthBarBg.destroy();
-        }
-        if (this.healthBarFill) {
-            this.healthBarFill.destroy();
+        try {
+            // Clean up effects
+            this.stopAllTweens();
+            
+            // Stop particle effects
+            if (window.GameManagers.particle && !this.isExtinguished) {
+                window.GameManagers.particle.stopFireEffect(this.x, this.y);
+            }
+            
+            // Clean up health bar
+            if (this.healthBarBg) {
+                this.healthBarBg.destroy();
+                this.healthBarBg = null;
+            }
+            if (this.healthBarFill) {
+                this.healthBarFill.destroy();
+                this.healthBarFill = null;
+            }
+        } catch (e) {
+            console.warn('Fire cleanup warning:', e);
         }
         
         super.destroy();

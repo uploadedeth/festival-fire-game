@@ -8,6 +8,9 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         scene.add.existing(this);
         scene.physics.add.existing(this);
         
+        // Scale the firefighter image appropriately - 50% bigger
+        this.setScale(1.5); // Changed from 1.0 to 1.5 for 50% increase
+        
         // Initialize properties
         this.initProperties();
         this.setupPhysics();
@@ -54,22 +57,44 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         this.setCollideWorldBounds(true);
         this.setBounce(0);
         this.setDragX(800); // Ground friction
-        this.body.setSize(24, 40, true); // Adjust hitbox
+        
+        // Adjust hitbox for the 50% bigger scaled image
+        const scaledSize = 64 * 1.5; // Now 96x96 for the 50% bigger firefighter
+        this.body.setSize(scaledSize * 0.8, scaledSize * 0.9, true); // Most of the scaled image size
         this.body.setMaxVelocity(this.moveSpeed, 1000);
         
-        // Ground level constraint - gray ground area at bottom (scaled for 1024x768)
-        this.groundY = 680; // Ground level based on new canvas size
+        // Ground level constraint - position lower on screen (closer to bottom)
+        this.groundY = 720; // Lower position (was 680) - closer to bottom of 768px canvas
         this.setY(this.groundY);
     }
     
     setupAnimations() {
-        // Remove all animations - keep firefighter clean and stable
-        this.walkFrames = [];
-        this.walkTween = null;
-        this.idleTween = null;
-        this.sprayTween = null;
+        // Set up animation state tracking
+        this.currentAnimation = null;
+        this.facing = 'right';
         
-        // No animations - just static sprite
+        // Start with idle animation
+        this.playAnimation('firefighter-idle-right');
+    }
+    
+    playAnimation(animationKey) {
+        try {
+            // Check if the animation exists
+            if (!this.scene.anims.exists(animationKey)) {
+                console.warn(`⚠️ Animation '${animationKey}' does not exist`);
+                return;
+            }
+            
+            if (this.currentAnimation !== animationKey) {
+                this.currentAnimation = animationKey;
+                this.play(animationKey);
+                console.log(`🎭 Playing animation: ${animationKey}`);
+            }
+        } catch (error) {
+            console.error(`❌ Error playing animation '${animationKey}':`, error);
+            // Fallback: just set the texture to the first frame
+            this.setFrame(0);
+        }
     }
     
     setupInput() {
@@ -81,6 +106,14 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         
         // Space for water spray
         this.spaceKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        
+        // Test keys to cycle through specific animation rows
+        this.testKey = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.T);
+        this.testKeyY = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Y);
+        this.testKeyU = this.scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.U);
+        this.testKeyPressed = false;
+        this.testKeyYPressed = false;
+        this.testKeyUPressed = false;
         
         // Mobile control integration
         this.setupMobileControls();
@@ -149,6 +182,28 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         const rightPressed = this.cursors.right.isDown || this.wasd.D.isDown;
         const sprayPressed = this.spaceKey.isDown;
         
+        // Test keys for different animation rows
+        const testPressed = this.testKey.isDown;
+        const testYPressed = this.testKeyY.isDown;
+        const testUPressed = this.testKeyU.isDown;
+        
+        if (testPressed && !this.testKeyPressed) {
+            console.log('🎬 Testing Row 1 idle animation (frames 0,2)...');
+            this.playAnimation('firefighter-test-row1-idle');
+        }
+        if (testYPressed && !this.testKeyYPressed) {
+            console.log('🎬 Testing Row 2 right animation (frames 4-7)...');
+            this.playAnimation('firefighter-test-row2-right');
+        }
+        if (testUPressed && !this.testKeyUPressed) {
+            console.log('🎬 Testing Row 4 left animation (frames 12-15)...');
+            this.playAnimation('firefighter-test-row4-left');
+        }
+        
+        this.testKeyPressed = testPressed;
+        this.testKeyYPressed = testYPressed;
+        this.testKeyUPressed = testUPressed;
+        
         // Override with mobile controls if active
         this.inputState.left = leftPressed || this.inputState.left;
         this.inputState.right = rightPressed || this.inputState.right;
@@ -168,16 +223,25 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         if (this.inputState.left) {
             velocityX = -this.moveSpeed;
             this.facing = 'left';
-            this.setFlipX(true);
             this.isMoving = true;
+            this.playAnimation('firefighter-walk-left');
         }
         
         // Right movement
         if (this.inputState.right) {
             velocityX = this.moveSpeed;
             this.facing = 'right';
-            this.setFlipX(false);
             this.isMoving = true;
+            this.playAnimation('firefighter-walk-right');
+        }
+        
+        // If not moving, play idle animation
+        if (!this.isMoving) {
+            if (this.facing === 'left') {
+                this.playAnimation('firefighter-idle-left');
+            } else {
+                this.playAnimation('firefighter-idle-right');
+            }
         }
         
         // Apply movement
@@ -229,9 +293,9 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
             this.waterParticles.add(waterParticle);
         }
         
-        // Position and launch water particle
-        const sprayX = this.x + (this.facing === 'right' ? 20 : -20);
-        const sprayY = this.y - 10;
+        // Position and launch water particle - from the middle of the smaller firefighter
+        const sprayX = this.x; // Center of firefighter (no offset)
+        const sprayY = this.y - 20; // Slightly above center of firefighter
         
         waterParticle.launch(sprayX, sprayY, this.facing);
         
@@ -242,7 +306,8 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
     }
     
     updateAnimations() {
-        // No animations - keep firefighter static and clean
+        // Animation logic is now handled in updateMovement
+        // This method can be used for additional animation effects if needed
         return;
     }
     
@@ -255,8 +320,8 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
             this.setVelocityY(0);
         }
         
-        // Keep within screen bounds with padding
-        const padding = 20;
+        // Keep within screen bounds with appropriate padding for bigger firefighter
+        const padding = 60; // Increased padding for 50% bigger firefighter
         if (this.x < padding) {
             this.setX(padding);
         } else if (this.x > 1024 - padding) { // Updated for new canvas width
@@ -267,21 +332,23 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
     // Public methods
     reset() {
         // Reset firefighter to starting position and state
-        this.setPosition(512, 680); // Ground level based on new canvas size
+        this.setPosition(512, 720); // Lower ground level position
         this.setVelocity(0, 0);
         this.facing = 'right';
-        this.setFlipX(false);
-        this.isSpraying = false;
         this.isMoving = false;
+        this.isSpraying = false;
         this.sprayDuration = 0;
         this.sprayTimer = 0;
         
         // Clear all water particles
         this.waterParticles.clear(true, true);
         
-        // Reset animations
-        this.setScale(1, 1);
+        // Reset animations and maintain 50% bigger scale
+        this.setScale(1.5); // Maintain the 50% bigger firefighter image scale
         this.setTint(0xffffff);
+        
+        // Reset to idle animation
+        this.playAnimation('firefighter-idle-right');
         
         console.log('🚒 Firefighter reset');
     }

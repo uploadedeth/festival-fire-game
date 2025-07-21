@@ -44,9 +44,11 @@ class WaterParticle extends Phaser.Physics.Arcade.Sprite {
         this.body.setSize(6, 6, true); // Small collision box
         this.body.setCollideWorldBounds(true);
         
-        // Physics callbacks
+        // Physics callbacks - with safety checks
         this.body.onWorldBounds = true;
-        this.scene.physics.world.on('worldbounds', this.onWorldBounds, this);
+        if (this.scene && this.scene.physics && this.scene.physics.world) {
+            this.scene.physics.world.on('worldbounds', this.onWorldBounds, this);
+        }
     }
     
     launch(x, y, direction) {
@@ -145,7 +147,7 @@ class WaterParticle extends Phaser.Physics.Arcade.Sprite {
         }
         
         // Create splash if hit ground
-        if (this.body.blocked.down && !this.splashCreated) {
+        if (this.body && this.body.blocked && this.body.blocked.down && !this.splashCreated) {
             this.createGroundSplash();
         }
     }
@@ -173,8 +175,10 @@ class WaterParticle extends Phaser.Physics.Arcade.Sprite {
         this.setTint(Phaser.Display.Color.GetColor(tint.r, tint.g, tint.b));
         
         // Add rotation based on velocity
-        const velocityAngle = Math.atan2(this.body.velocity.y, this.body.velocity.x);
-        this.setRotation(velocityAngle);
+        if (this.body && this.body.velocity) {
+            const velocityAngle = Math.atan2(this.body.velocity.y, this.body.velocity.x);
+            this.setRotation(velocityAngle);
+        }
     }
     
     createGroundSplash() {
@@ -290,7 +294,11 @@ class WaterParticle extends Phaser.Physics.Arcade.Sprite {
     }
     
     getBounds() {
-        // Return collision bounds for manual collision detection
+        // Return collision bounds for manual collision detection - with safety checks
+        if (!this.body) {
+            return new Phaser.Geom.Rectangle(this.x - 3, this.y - 3, 6, 6);
+        }
+        
         return new Phaser.Geom.Rectangle(
             this.x - this.body.width / 2,
             this.y - this.body.height / 2,
@@ -300,18 +308,26 @@ class WaterParticle extends Phaser.Physics.Arcade.Sprite {
     }
     
     destroy() {
-        // Clean up trail graphics
-        if (this.trailGraphics) {
-            this.trailGraphics.destroy();
+        try {
+            // Clean up trail graphics
+            if (this.trailGraphics) {
+                this.trailGraphics.destroy();
+                this.trailGraphics = null;
+            }
+            
+            // Clean up timer
+            if (this.trailTimer) {
+                this.trailTimer.destroy();
+                this.trailTimer = null;
+            }
+            
+            // Remove world bounds listener - with safety checks
+            if (this.scene && this.scene.physics && this.scene.physics.world) {
+                this.scene.physics.world.off('worldbounds', this.onWorldBounds, this);
+            }
+        } catch (e) {
+            console.warn('WaterParticle cleanup warning:', e);
         }
-        
-        // Clean up timer
-        if (this.trailTimer) {
-            this.trailTimer.destroy();
-        }
-        
-        // Remove world bounds listener
-        this.scene.physics.world.off('worldbounds', this.onWorldBounds, this);
         
         super.destroy();
     }

@@ -16,18 +16,57 @@ class BootScene extends Phaser.Scene {
         });
         
         // Load the stage background image
-        this.load.image('stage-background', 'assets/images/aa1744e2-4332-40b0-bb96-98a386cd7a86.png');
+        this.load.image('stage-background', 'assets/images/tomorrowland-pixel-stage.png');
+        
+        // Load the animated firefighter sprite sheet
+        this.load.spritesheet('firefighter', 'assets/images/A_stylized_8_bit_pix...-119709497-1.png', {
+            frameWidth: 64,  // Firefighter frame size
+            frameHeight: 64, // Firefighter frame size
+            startFrame: 0,
+            endFrame: 15     // Firefighter frames
+        });
+        
+        // Load fire sprite as image first to detect dimensions
+        this.load.image('fire-test', 'assets/images/fire-sprite.png');
+        
+        // Add loading event for fire sprite detection
+        this.load.on('filecomplete-image-fire-test', () => {
+            const texture = this.textures.get('fire-test');
+            const image = texture.source[0];
+            console.log(`🔥 Fire sprite dimensions: ${image.width}x${image.height}`);
+            
+            // Calculate frame size based on 4x4 grid
+            const frameWidth = image.width / 4;
+            const frameHeight = image.height / 4;
+            console.log(`🔥 Fire frame size: ${frameWidth}x${frameHeight}`);
+            
+            // Now load as spritesheet with correct dimensions
+            this.load.spritesheet('fire', 'assets/images/fire-sprite.png', {
+                frameWidth: frameWidth,
+                frameHeight: frameHeight,
+                startFrame: 0,
+                endFrame: -1
+            });
+            
+            this.load.start(); // Restart loading for fire spritesheet
+        });
+        
+        // Add loading event to debug fire sprite
+        this.load.on('filecomplete-spritesheet-fire', () => {
+            console.log('✅ Fire sprite sheet loaded successfully');
+            // Create fire animations now that sprite is loaded
+            this.createFireAnimations();
+        });
         
         // Generate procedural textures for game entities (not stage elements)
         this.generateTextures();
     }
     
     generateTextures() {
-        // Generate firefighter texture
-        this.generateFirefighterTexture();
+        // Skip firefighter texture generation - using real image
         
-        // Generate fire textures for different sizes
-        this.generateFireTextures();
+        // Skip fire texture generation - using sprite sheet instead
+        // Fire animations will be created in create() method after loading
         
         // Generate water particle texture
         this.generateWaterTexture();
@@ -41,88 +80,93 @@ class BootScene extends Phaser.Scene {
         // Skip stage texture generation - using background image instead
     }
     
-    generateFirefighterTexture() {
-        const graphics = this.add.graphics();
+    createFireAnimations() {
+        // Check if the fire sprite sheet is loaded
+        if (!this.textures.exists('fire')) {
+            console.error('❌ Fire sprite sheet not loaded');
+            return;
+        }
         
-        // Body (orange suit)
-        graphics.fillStyle(0xFF6B35);
-        graphics.fillRect(8, 16, 16, 32);
-        
-        // Helmet (gold)
-        graphics.fillStyle(0xFFD700);
-        graphics.fillRect(6, 4, 20, 16);
-        
-        // Face (skin tone)
-        graphics.fillStyle(0xFFDBAC);
-        graphics.fillRect(10, 8, 12, 12);
-        
-        // Equipment belt (brown)
-        graphics.fillStyle(0x8B4513);
-        graphics.fillRect(8, 32, 16, 4);
-        
-        // Eyes
-        graphics.fillStyle(0x000000);
-        graphics.fillRect(12, 12, 2, 2);
-        graphics.fillRect(18, 12, 2, 2);
-        
-        // Generate texture
-        graphics.generateTexture('firefighter', 32, 48);
-        graphics.destroy();
-    }
-    
-    generateFireTextures() {
-        const sizes = [
-            { key: 'fire-small', width: 20, height: 30 },
-            { key: 'fire-medium', width: 30, height: 40 },
-            { key: 'fire-large', width: 40, height: 50 }
-        ];
-        
-        sizes.forEach(size => {
-            const graphics = this.add.graphics();
+        try {
+            console.log('🔥 Creating fire animations...');
             
-            // Fire base (dark red)
-            graphics.fillStyle(0xDC143C);
-            graphics.fillEllipse(size.width / 2, size.height - 10, size.width, size.height / 2);
+            // Get the texture to see how many frames we have
+            const texture = this.textures.get('fire');
+            const frameCount = texture.frameTotal;
+            const source = texture.source[0];
+            console.log(`📊 Fire sprite sheet info:`);
+            console.log(`  - Image dimensions: ${source.width}x${source.height}`);
+            console.log(`  - Frame count: ${frameCount}`);
+            console.log(`  - Frames per row: ${Math.ceil(Math.sqrt(frameCount))}`);
             
-            // Fire middle (orange)
-            graphics.fillStyle(0xFF4500);
-            graphics.fillEllipse(size.width / 2, size.height - 12, size.width * 0.8, size.height * 0.4);
+            // Create fire animations for different sizes using different rows
+            // Row 1 (frames 0-3): Small fire
+            this.anims.create({
+                key: 'fire-small',
+                frames: this.anims.generateFrameNumbers('fire', { start: 0, end: 3 }),
+                frameRate: 8,
+                repeat: -1
+            });
             
-            // Fire top (yellow)
-            graphics.fillStyle(0xFFD700);
-            graphics.fillEllipse(size.width / 2, size.height - 16, size.width * 0.6, size.height * 0.3);
+            // Row 2 (frames 4-7): Medium fire
+            this.anims.create({
+                key: 'fire-medium',
+                frames: this.anims.generateFrameNumbers('fire', { start: 4, end: 7 }),
+                frameRate: 8,
+                repeat: -1
+            });
             
-            // Add some flame tips
-            for (let i = 0; i < 3; i++) {
-                const x = (size.width / 4) + (i * size.width / 4);
-                const y = size.height - 20 - (Math.random() * 10);
-                graphics.fillStyle(0xFFFF00);
-                graphics.fillTriangle(x, y, x - 3, y + 8, x + 3, y + 8);
+            // Row 3 (frames 8-11): Large fire
+            this.anims.create({
+                key: 'fire-large',
+                frames: this.anims.generateFrameNumbers('fire', { start: 8, end: 11 }),
+                frameRate: 8,
+                repeat: -1
+            });
+            
+            // Row 4 (frames 12-15): Extra large fire (optional)
+            if (frameCount >= 16) {
+                this.anims.create({
+                    key: 'fire-xlarge',
+                    frames: this.anims.generateFrameNumbers('fire', { start: 12, end: 15 }),
+                    frameRate: 8,
+                    repeat: -1
+                });
             }
             
-            graphics.generateTexture(size.key, size.width, size.height);
-            graphics.destroy();
-        });
+            console.log('✅ Fire animations created successfully');
+            
+        } catch (error) {
+            console.error('❌ Error creating fire animations:', error);
+        }
     }
     
     generateWaterTexture() {
         const graphics = this.add.graphics();
         
-        // Water droplet (blue with highlight)
-        graphics.fillStyle(0x4169E1);
-        graphics.fillCircle(4, 4, 4);
+        // Pixelated water droplet with concentrated solid blue color
+        graphics.fillStyle(0x0066FF); // Solid, concentrated blue color
         
-        // Water highlight
-        graphics.fillStyle(0x87CEEB);
-        graphics.fillCircle(3, 3, 1.5);
+        // Create pixelated square water particle instead of smooth circle
+        graphics.fillRect(0, 0, 8, 8); // 8x8 pixel square for pixelated look
+        
+        // Add a small inner pixel for more concentrated look
+        graphics.fillStyle(0x0044CC); // Darker blue center
+        graphics.fillRect(2, 2, 4, 4); // 4x4 inner square
+        
+        // Add single bright pixel highlight for pixelated effect
+        graphics.fillStyle(0x00AAFF); // Bright blue highlight
+        graphics.fillRect(2, 2, 2, 2); // 2x2 highlight pixel
         
         graphics.generateTexture('water-particle', 8, 8);
         graphics.destroy();
         
-        // Generate steam particle
+        // Generate pixelated steam particle
         const steamGraphics = this.add.graphics();
-        steamGraphics.fillStyle(0xF5F5F5, 0.6);
-        steamGraphics.fillCircle(3, 3, 3);
+        steamGraphics.fillStyle(0xEEEEEE); // Solid light gray, no transparency
+        steamGraphics.fillRect(0, 0, 6, 6); // 6x6 pixel square
+        steamGraphics.fillStyle(0xFFFFFF); // White center
+        steamGraphics.fillRect(1, 1, 4, 4); // 4x4 white center
         steamGraphics.generateTexture('steam-particle', 6, 6);
         steamGraphics.destroy();
     }
@@ -188,9 +232,188 @@ class BootScene extends Phaser.Scene {
         // Initialize UI manager
         window.GameManagers.ui = new UIManager();
         
-        console.log('✅ Boot Scene complete - basic managers initialized');
+        // Create firefighter animations (always work)
+        this.createFirefighterAnimations();
+        
+        // Create fire animations only if fire sprite sheet is available
+        if (this.textures.exists('fire')) {
+            this.createFireAnimations();
+        } else {
+            console.log('🔥 Fire sprite not loaded yet, will create animations when ready');
+        }
+        
+        console.log('✅ Boot Scene complete - firefighter animations ready');
         
         // Proceed to menu scene
         this.scene.start('MenuScene');
+    }
+    
+    createFirefighterAnimations() {
+        // Check if the firefighter texture is loaded
+        if (!this.textures.exists('firefighter')) {
+            console.error('❌ Firefighter sprite sheet not loaded');
+            return;
+        }
+        
+        try {
+            console.log('🎭 Creating firefighter animations...');
+            
+            // Get the texture to see how many frames we have
+            const texture = this.textures.get('firefighter');
+            const frameCount = texture.frameTotal;
+            console.log(`📊 Available frames: ${frameCount}`);
+            
+            // Based on user's sprite sheet layout:
+            // Row 1 (0-3): Idle - use frames 0 and 2
+            // Row 2 (4-7): Moving right
+            // Row 3 (8-11): Moving up (skip)
+            // Row 4 (12-15): Moving left
+            
+            if (frameCount >= 16) {
+                
+                // Idle animations using Row 1 - frames 0 and 2 only
+                this.anims.create({
+                    key: 'firefighter-idle-left',
+                    frames: [
+                        { key: 'firefighter', frame: 0 },
+                        { key: 'firefighter', frame: 2 }
+                    ],
+                    frameRate: 6, // Increased from 2 to 6 for 3x faster animation
+                    repeat: -1
+                });
+                
+                this.anims.create({
+                    key: 'firefighter-idle-right',
+                    frames: [
+                        { key: 'firefighter', frame: 0 },
+                        { key: 'firefighter', frame: 2 }
+                    ],
+                    frameRate: 6, // Increased from 2 to 6 for 3x faster animation
+                    repeat: -1
+                });
+                
+                // Walking left animation using Row 4 (frames 12-15)
+                this.anims.create({
+                    key: 'firefighter-walk-left',
+                    frames: this.anims.generateFrameNumbers('firefighter', { start: 12, end: 15 }),
+                    frameRate: 8,
+                    repeat: -1
+                });
+                
+                // Walking right animation using Row 2 (frames 4-7)
+                this.anims.create({
+                    key: 'firefighter-walk-right',
+                    frames: this.anims.generateFrameNumbers('firefighter', { start: 4, end: 7 }),
+                    frameRate: 8,
+                    repeat: -1
+                });
+                
+            } else if (frameCount >= 8) {
+                // Fallback for smaller sprite sheets
+                this.anims.create({
+                    key: 'firefighter-idle-left',
+                    frames: [{ key: 'firefighter', frame: 0 }],
+                    frameRate: 1,
+                    repeat: 0
+                });
+                
+                this.anims.create({
+                    key: 'firefighter-idle-right',
+                    frames: [{ key: 'firefighter', frame: 0 }],
+                    frameRate: 1,
+                    repeat: 0
+                });
+                
+                this.anims.create({
+                    key: 'firefighter-walk-left',
+                    frames: this.anims.generateFrameNumbers('firefighter', { start: 4, end: 7 }),
+                    frameRate: 6,
+                    repeat: -1
+                });
+                
+                this.anims.create({
+                    key: 'firefighter-walk-right',
+                    frames: this.anims.generateFrameNumbers('firefighter', { start: 0, end: 3 }),
+                    frameRate: 6,
+                    repeat: -1
+                });
+                
+            } else {
+                // Very few frames, use fallback
+                this.createFallbackAnimations();
+                return;
+            }
+            
+            // Create test animations to see specific rows
+            console.log('🎬 Creating test animations for each row...');
+            this.anims.create({
+                key: 'firefighter-test-row1-idle',
+                frames: [
+                    { key: 'firefighter', frame: 0 },
+                    { key: 'firefighter', frame: 2 }
+                ],
+                frameRate: 2,
+                repeat: -1
+            });
+            
+            this.anims.create({
+                key: 'firefighter-test-row2-right',
+                frames: this.anims.generateFrameNumbers('firefighter', { start: 4, end: 7 }),
+                frameRate: 4,
+                repeat: -1
+            });
+            
+            this.anims.create({
+                key: 'firefighter-test-row4-left',
+                frames: this.anims.generateFrameNumbers('firefighter', { start: 12, end: 15 }),
+                frameRate: 4,
+                repeat: -1
+            });
+            
+            console.log('✅ Firefighter animations created successfully');
+            console.log('💡 Press T for Row 1 idle, Y for Row 2 right, U for Row 4 left');
+            
+        } catch (error) {
+            console.error('❌ Error creating firefighter animations:', error);
+            
+            // Fallback: create minimal animations
+            this.createFallbackAnimations();
+        }
+    }
+    
+    createFallbackAnimations() {
+        try {
+            console.log('🔄 Creating fallback animations...');
+            
+            // Simple fallback animations using just the first frame
+            this.anims.create({
+                key: 'firefighter-idle-left',
+                frames: [{ key: 'firefighter', frame: 0 }],
+                frameRate: 1
+            });
+            
+            this.anims.create({
+                key: 'firefighter-idle-right',
+                frames: [{ key: 'firefighter', frame: 0 }],
+                frameRate: 1
+            });
+            
+            this.anims.create({
+                key: 'firefighter-walk-left',
+                frames: [{ key: 'firefighter', frame: 0 }],
+                frameRate: 1
+            });
+            
+            this.anims.create({
+                key: 'firefighter-walk-right',
+                frames: [{ key: 'firefighter', frame: 0 }],
+                frameRate: 1
+            });
+            
+            console.log('✅ Fallback animations created');
+            
+        } catch (error) {
+            console.error('❌ Failed to create fallback animations:', error);
+        }
     }
 } 

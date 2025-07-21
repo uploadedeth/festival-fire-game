@@ -6,29 +6,39 @@ class GameOverScene extends Phaser.Scene {
     }
     
     init(data) {
+        console.log('🎯 GameOverScene.init() called with data:', data);
         this.finalScore = data.finalScore || 0;
         this.firesExtinguished = data.firesExtinguished || 0;
         this.timeElapsed = data.timeElapsed || 60;
+        console.log('🎯 GameOverScene init complete');
     }
     
     create() {
-        console.log('🏁 Game Over Scene started');
+        console.log('🏁 GameOverScene.create() starting...');
         console.log('📊 Final Score received:', this.finalScore);
         console.log('🔥 Fires Extinguished:', this.firesExtinguished);
         
-        // Create background
-        this.createBackground();
-        
-        // Create UI elements
-        this.createUI();
-        
-        // Set up input
-        this.setupInput();
-        
-        // Fade in
-        this.cameras.main.fadeIn(1000, 0, 0, 0);
-        
-        console.log('✅ Game Over Scene setup complete');
+        try {
+            // Create background
+            this.createBackground();
+            console.log('✅ Background created');
+            
+            // Create UI elements
+            this.createUI();
+            console.log('✅ UI created');
+            
+            // Set up input
+            this.setupInput();
+            console.log('✅ Input setup');
+            
+            // Fade in
+            this.cameras.main.fadeIn(1000, 0, 0, 0);
+            console.log('✅ Fade in started');
+            
+            console.log('✅ Game Over Scene setup complete');
+        } catch (e) {
+            console.error('❌ Error in GameOverScene.create():', e);
+        }
     }
     
     createBackground() {
