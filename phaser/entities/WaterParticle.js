@@ -131,10 +131,22 @@ class WaterParticle extends Phaser.Physics.Arcade.Sprite {
     }
     
     preUpdate(time, delta) {
-        super.preUpdate(time, delta);
+        // Safety check - don't update if inactive, scene is ending, or physics is disabled
+        if (!this.active || !this.scene || this.scene.gameEnding) {
+            return;
+        }
         
-        // Safety check - don't update if inactive or physics is disabled
-        if (!this.active || (this.body && !this.body.enable)) {
+        // Additional safety check for physics body
+        if (this.body && !this.body.enable) {
+            return;
+        }
+        
+        // Call super with error handling
+        try {
+            super.preUpdate(time, delta);
+        } catch (e) {
+            console.warn('WaterParticle super.preUpdate error:', e);
+            this.deactivate();
             return;
         }
         
@@ -149,9 +161,13 @@ class WaterParticle extends Phaser.Physics.Arcade.Sprite {
             this.deactivate();
         }
         
-        // Create splash if hit ground
+        // Create splash if hit ground - with additional safety checks
         if (this.body && this.body.blocked && this.body.blocked.down && !this.splashCreated) {
-            this.createGroundSplash();
+            try {
+                this.createGroundSplash();
+            } catch (e) {
+                console.warn('WaterParticle ground splash error:', e);
+            }
         }
     }
     

@@ -236,7 +236,12 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
     
     update(time, delta) {
         // Safety check - don't update if fire is inactive or physics is disabled
-        if (!this.active || (this.body && !this.body.enable)) {
+        if (!this.active || !this.scene || this.scene.gameEnding) {
+            return;
+        }
+        
+        // Additional safety check for physics body
+        if (this.body && !this.body.enable) {
             return;
         }
         
@@ -255,8 +260,13 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
     }
     
     updateFalling(delta) {
-        // Safety check - don't try to update physics if body is disabled
-        if (!this.body || !this.body.enable) {
+        // Safety check - don't try to update physics if body is disabled or destroyed
+        if (!this.body || !this.body.enable || !this.active) {
+            return;
+        }
+        
+        // Additional safety check for scene state
+        if (!this.scene || this.scene.gameEnding) {
             return;
         }
         
@@ -264,21 +274,37 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
             // Check if fire has reached the bottom
             if (this.y >= this.targetY) {
                 // Fire has reached the bottom, stop falling
-                this.setY(this.targetY);
-                this.setVelocityY(0);
-                this.hasFallen = true;
-                this.isFalling = false;
-                console.log(`🔥 Fire settled at bottom Y: ${this.y}`);
+                try {
+                    this.setY(this.targetY);
+                    this.setVelocityY(0);
+                    this.hasFallen = true;
+                    this.isFalling = false;
+                    console.log(`🔥 Fire settled at bottom Y: ${this.y}`);
+                } catch (e) {
+                    console.warn('Error settling fire:', e);
+                }
             } else {
                 // Continue falling at custom speed
-                this.setVelocityY(this.fallSpeed);
+                try {
+                    this.setVelocityY(this.fallSpeed);
+                } catch (e) {
+                    console.warn('Error setting fall velocity:', e);
+                }
             }
         } else if (this.hasFallen) {
             // Fire has settled, keep it static
-            this.setVelocity(0, 0);
+            try {
+                this.setVelocity(0, 0);
+            } catch (e) {
+                console.warn('Error setting settled velocity:', e);
+            }
         } else {
             // Fire hasn't started falling yet, keep it static
-            this.setVelocity(0, 0);
+            try {
+                this.setVelocity(0, 0);
+            } catch (e) {
+                console.warn('Error setting initial velocity:', e);
+            }
         }
     }
     

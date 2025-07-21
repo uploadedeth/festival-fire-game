@@ -6,6 +6,9 @@ class MenuScene extends Phaser.Scene {
     }
     
     create() {
+        // Initialize scene state
+        this.transitionInProgress = false;
+        
         // Create same background as the game
         this.createBackground();
         
@@ -127,6 +130,8 @@ class MenuScene extends Phaser.Scene {
         });
         
         startButton.on('pointerdown', () => {
+            if (this.transitionInProgress) return;
+            
             this.tweens.add({
                 targets: [startButton, startText],
                 scaleX: 0.95,
@@ -215,26 +220,41 @@ class MenuScene extends Phaser.Scene {
     setupInput() {
         // Keyboard shortcuts
         this.input.keyboard.on('keydown-SPACE', () => {
-            this.startGame();
+            if (!this.transitionInProgress) {
+                this.startGame();
+            }
         });
         
         this.input.keyboard.on('keydown-ENTER', () => {
-            this.startGame();
+            if (!this.transitionInProgress) {
+                this.startGame();
+            }
         });
     }
     
     startGame() {
+        if (this.transitionInProgress) return;
+        
+        this.transitionInProgress = true;
+        console.log('🚀 Starting game from menu...');
+        
         // Play transition sound
         if (window.GameManagers.audio) {
-            window.GameManagers.audio.playMenuSound();
+            try {
+                window.GameManagers.audio.playMenuSound();
+            } catch (e) {
+                console.warn('Audio error during game start:', e);
+            }
         }
         
-        // Transition effect
-        this.cameras.main.fadeOut(500, 0, 0, 0);
-        
-        this.cameras.main.once('camerafadeoutcomplete', () => {
+        try {
+            console.log('🎮 Transitioning to GameScene...');
             this.scene.start('GameScene');
-        });
+        } catch (e) {
+            console.error('Failed to start GameScene:', e);
+            // Reset flag if scene start fails
+            this.transitionInProgress = false;
+        }
     }
     
     isTouchDevice() {

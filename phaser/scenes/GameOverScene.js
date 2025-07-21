@@ -10,12 +10,21 @@ class GameOverScene extends Phaser.Scene {
         this.finalScore = data.finalScore || 0;
         this.firesExtinguished = data.firesExtinguished || 0;
         this.timeElapsed = data.timeElapsed || 60;
+        
+        // Initialize button state to prevent multiple clicks
+        this.buttonPressed = false;
+        this.transitionInProgress = false;
+        
         console.log('🎯 GameOverScene init complete');
     }
     
     create() {
         console.log('🏁 GameOverScene.create() starting...');
         console.log('📊 Final Score received:', this.finalScore);
+        
+        // Reset transition flags on scene creation
+        this.buttonPressed = false;
+        this.transitionInProgress = false;
         
         try {
             // Create same background as menu
@@ -192,6 +201,12 @@ class GameOverScene extends Phaser.Scene {
         });
         
         playAgainButton.on('pointerdown', () => {
+            // Prevent multiple clicks
+            if (this.buttonPressed || this.transitionInProgress) {
+                return;
+            }
+            
+            this.buttonPressed = true;
             this.tweens.add({
                 targets: [playAgainButton, playAgainText],
                 scaleX: 0.95,
@@ -241,6 +256,12 @@ class GameOverScene extends Phaser.Scene {
         });
         
         menuButton.on('pointerdown', () => {
+            // Prevent multiple clicks
+            if (this.buttonPressed || this.transitionInProgress) {
+                return;
+            }
+            
+            this.buttonPressed = true;
             this.goToMenu();
         });
         
@@ -307,46 +328,83 @@ class GameOverScene extends Phaser.Scene {
     setupInput() {
         // Enter or Space to play again
         this.input.keyboard.on('keydown-ENTER', () => {
-            this.playAgain();
+            if (!this.buttonPressed && !this.transitionInProgress) {
+                this.buttonPressed = true;
+                this.playAgain();
+            }
         });
         
         this.input.keyboard.on('keydown-SPACE', () => {
-            this.playAgain();
+            if (!this.buttonPressed && !this.transitionInProgress) {
+                this.buttonPressed = true;
+                this.playAgain();
+            }
         });
         
         // Escape to menu
         this.input.keyboard.on('keydown-ESC', () => {
-            this.goToMenu();
+            if (!this.buttonPressed && !this.transitionInProgress) {
+                this.buttonPressed = true;
+                this.goToMenu();
+            }
         });
     }
     
     playAgain() {
+        if (this.transitionInProgress) return;
+        
+        this.transitionInProgress = true;
         console.log('🔄 Starting new game...');
         
         // Play sound effect
         if (window.GameManagers.audio) {
-            window.GameManagers.audio.playMenuSound();
+            try {
+                window.GameManagers.audio.playMenuSound();
+            } catch (e) {
+                console.warn('Audio error:', e);
+            }
         }
         
         // Fade out and start new game (same functionality as menu's start game)
         this.cameras.main.fadeOut(500, 0, 0, 0);
         this.cameras.main.once('camerafadeoutcomplete', () => {
-            this.scene.start('GameScene');
+            try {
+                this.scene.start('GameScene');
+            } catch (e) {
+                console.error('Scene start error:', e);
+                // Reset flags if scene start fails
+                this.transitionInProgress = false;
+                this.buttonPressed = false;
+            }
         });
     }
     
     goToMenu() {
+        if (this.transitionInProgress) return;
+        
+        this.transitionInProgress = true;
         console.log('📋 Returning to menu...');
         
         // Play sound effect
         if (window.GameManagers.audio) {
-            window.GameManagers.audio.playMenuSound();
+            try {
+                window.GameManagers.audio.playMenuSound();
+            } catch (e) {
+                console.warn('Audio error:', e);
+            }
         }
         
         // Fade out and go to menu
         this.cameras.main.fadeOut(500, 0, 0, 0);
         this.cameras.main.once('camerafadeoutcomplete', () => {
-            this.scene.start('MenuScene');
+            try {
+                this.scene.start('MenuScene');
+            } catch (e) {
+                console.error('Scene start error:', e);
+                // Reset flags if scene start fails
+                this.transitionInProgress = false;
+                this.buttonPressed = false;
+            }
         });
     }
 } 

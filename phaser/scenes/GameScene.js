@@ -6,6 +6,12 @@ class GameScene extends Phaser.Scene {
     }
     
     init() {
+        console.log('🔄 GameScene.init() - Resetting scene state...');
+        
+        // Reset ALL scene state completely
+        this.gameEnding = false;
+        this.transitionInProgress = false;
+        
         // Initialize game data
         this.gameData = {
             score: 0,
@@ -22,47 +28,91 @@ class GameScene extends Phaser.Scene {
             gameDuration: 60 // seconds
         };
         
-        // Debug tracking
+        // Reset timers
+        this.gameTimer = null;
+        this.fireSpawnTimer = null;
+        this.uiUpdateTimer = null;
+        
+        // Reset entities
+        this.firefighter = null;
+        this.fires = null;
+        this.ground = null;
+        
+        // Reset collision tracking
+        this.collisionObjects = [];
+        
+        // Reset debug tracking
         this.lastLoggedTime = -1;
+        
+        // Reset milestone flags
+        this.showedHighFireWarning = false;
+        this.showed100Milestone = false;
+        
+        console.log('✅ GameScene.init() complete - Scene state reset');
     }
     
     create() {
         console.log('🎮 Game Scene started');
         
-        // Initialize game ending flag
-        this.gameEnding = false;
-        
-        // Create background
-        this.createBackground();
-        
-        // Create game entities
-        this.createEntities();
-        
-        // Set up physics collisions
-        this.setupCollisions();
-        
-        // Set up input
-        this.setupInput();
-        
-        // Start game timer
-        this.startGameTimer();
-        
-        // Start fire spawning
-        this.startFireSpawning();
-        
-        // Set up UI updates
-        this.setupUIUpdates();
-        
-        // Camera effects
-        this.setupCamera();
-        
-        // Start ambient effects
-        if (window.GameManagers.audio) {
-            window.GameManagers.audio.startAmbientSound();
+        try {
+            // Initialize game ending flag
+            this.gameEnding = false;
+            this.transitionInProgress = false;
+            
+            // Create background
+            this.createBackground();
+            
+            // Create game entities
+            this.createEntities();
+            
+            // Set up physics collisions
+            this.setupCollisions();
+            
+            // Set up input
+            this.setupInput();
+            
+            // Start game timer
+            this.startGameTimer();
+            
+            // Start fire spawning
+            this.startFireSpawning();
+            
+            // Set up UI updates
+            this.setupUIUpdates();
+            
+            // Camera effects
+            this.setupCamera();
+            
+            // Start ambient effects
+            if (window.GameManagers.audio) {
+                try {
+                    window.GameManagers.audio.startAmbientSound();
+                } catch (e) {
+                    console.warn('Audio start error:', e);
+                }
+            }
+            
+            // Fade in from black
+            this.cameras.main.fadeIn(1000, 0, 0, 0);
+            
+            console.log('✅ GameScene created successfully');
+            
+        } catch (error) {
+            console.error('❌ Fatal error in GameScene.create():', error);
+            
+            // Emergency cleanup
+            this.gameEnding = true;
+            this.gameData.isActive = false;
+            
+            // Try to return to menu
+            this.time.delayedCall(1000, () => {
+                try {
+                    this.scene.start('MenuScene');
+                } catch (e) {
+                    console.error('Failed to return to menu after error:', e);
+                }
+            });
         }
-        
-        // Fade in from black
-        this.cameras.main.fadeIn(1000, 0, 0, 0);
     }
     
     createBackground() {
@@ -84,25 +134,47 @@ class GameScene extends Phaser.Scene {
     }
     
     createEntities() {
-        // Prevent multiple firefighter creation
-        if (this.firefighter) {
-            this.firefighter.destroy();
+        console.log('🏗️ Creating game entities...');
+        
+        // Clean up any existing entities completely
+        try {
+            if (this.firefighter) {
+                console.log('🧹 Destroying existing firefighter...');
+                this.firefighter.destroy();
+                this.firefighter = null;
+            }
+            
+            if (this.fires) {
+                console.log('🧹 Clearing existing fires...');
+                this.fires.clear(true, true);
+                this.fires.destroy();
+                this.fires = null;
+            }
+        } catch (e) {
+            console.warn('Entity cleanup warning:', e);
         }
         
         // Create firefighter on ground level (lower position on canvas)
-        this.firefighter = new Firefighter(this, 512, 720);
-        
-        // Clear any existing fires
-        if (this.fires) {
-            this.fires.clear(true, true);
+        try {
+            this.firefighter = new Firefighter(this, 512, 720);
+            console.log('✅ Firefighter created');
+        } catch (e) {
+            console.error('Failed to create firefighter:', e);
+            return;
         }
         
         // Create groups for game objects
-        this.fires = this.physics.add.group({
-            classType: Fire,
-            maxSize: this.gameSettings.maxFires,
-            runChildUpdate: true
-        });
+        try {
+            this.fires = this.physics.add.group({
+                classType: Fire,
+                maxSize: this.gameSettings.maxFires,
+                runChildUpdate: true
+            });
+            console.log('✅ Fire group created');
+        } catch (e) {
+            console.error('Failed to create fire group:', e);
+            return;
+        }
         
         // Track game state
         this.gameData.isActive = true;
@@ -115,26 +187,59 @@ class GameScene extends Phaser.Scene {
     }
     
     setupCollisions() {
-        // Store collision references for cleanup
+        console.log('⚡ Setting up physics collisions...');
+        
+        // Clear any existing collision objects first
+        if (this.collisionObjects && this.collisionObjects.length > 0) {
+            this.collisionObjects.forEach(obj => {
+                if (obj && obj.destroy) {
+                    try {
+                        obj.destroy();
+                    } catch (e) {
+                        console.warn('Old collision cleanup warning:', e);
+                    }
+                }
+            });
+        }
+        
+        // Reset collision tracking
         this.collisionObjects = [];
         
-        // Water particles vs fires collision
-        const waterFireOverlap = this.physics.add.overlap(
-            this.firefighter.getWaterParticles(),
-            this.fires,
-            this.waterHitFire,
-            null,
-            this
-        );
-        this.collisionObjects.push(waterFireOverlap);
+        // Safety check - make sure entities exist before setting up collisions
+        if (!this.firefighter || !this.fires || !this.ground) {
+            console.error('Cannot setup collisions - missing entities');
+            return;
+        }
         
-        // Firefighter vs ground collision
-        const firefighterGroundCollider = this.physics.add.collider(this.firefighter, this.ground);
-        this.collisionObjects.push(firefighterGroundCollider);
+        const waterParticles = this.firefighter.getWaterParticles();
+        if (!waterParticles) {
+            console.error('Cannot setup collisions - missing water particles');
+            return;
+        }
         
-        // Water particles vs ground collision
-        const waterGroundCollider = this.physics.add.collider(this.firefighter.getWaterParticles(), this.ground);
-        this.collisionObjects.push(waterGroundCollider);
+        try {
+            // Water particles vs fires collision
+            const waterFireOverlap = this.physics.add.overlap(
+                waterParticles,
+                this.fires,
+                this.waterHitFire,
+                null,
+                this
+            );
+            this.collisionObjects.push(waterFireOverlap);
+            
+            // Firefighter vs ground collision
+            const firefighterGroundCollider = this.physics.add.collider(this.firefighter, this.ground);
+            this.collisionObjects.push(firefighterGroundCollider);
+            
+            // Water particles vs ground collision
+            const waterGroundCollider = this.physics.add.collider(waterParticles, this.ground);
+            this.collisionObjects.push(waterGroundCollider);
+            
+            console.log('✅ Physics collisions setup complete');
+        } catch (e) {
+            console.error('Failed to setup collisions:', e);
+        }
         
         // NO fire vs ground collision - fires stay in black backdrop area
     }
@@ -542,7 +647,9 @@ class GameScene extends Phaser.Scene {
         });
         
         playAgainButton.on('pointerdown', () => {
-            this.restartGame();
+            if (!this.transitionInProgress) {
+                this.restartGame();
+            }
         });
         
         // Main Menu button interactions
@@ -569,16 +676,22 @@ class GameScene extends Phaser.Scene {
         });
         
         menuButton.on('pointerdown', () => {
-            this.goToMainMenu();
+            if (!this.transitionInProgress) {
+                this.goToMainMenu();
+            }
         });
         
         // Keyboard controls
         this.input.keyboard.once('keydown-ENTER', () => {
-            this.restartGame();
+            if (!this.transitionInProgress) {
+                this.restartGame();
+            }
         });
         
         this.input.keyboard.once('keydown-ESC', () => {
-            this.goToMainMenu();
+            if (!this.transitionInProgress) {
+                this.goToMainMenu();
+            }
         });
         
         // Add glow effect to score
@@ -604,33 +717,59 @@ class GameScene extends Phaser.Scene {
     }
     
     restartGame() {
+        if (this.transitionInProgress) return;
+        
+        this.transitionInProgress = true;
         console.log('🔄 Restarting game...');
         
         // Play sound effect
         if (window.GameManagers.audio) {
-            window.GameManagers.audio.playMenuSound();
+            try {
+                window.GameManagers.audio.playMenuSound();
+            } catch (e) {
+                console.warn('Audio error during restart:', e);
+            }
         }
         
         // Clean up collision system before restart
         this.cleanupCollisions();
         
-        // Restart the current scene
-        this.scene.restart();
+        try {
+            // Restart the current scene immediately
+            this.scene.restart();
+        } catch (e) {
+            console.error('Scene restart error:', e);
+            // Reset flag if restart fails
+            this.transitionInProgress = false;
+        }
     }
     
     goToMainMenu() {
+        if (this.transitionInProgress) return;
+        
+        this.transitionInProgress = true;
         console.log('📋 Going to main menu...');
         
         // Play sound effect
         if (window.GameManagers.audio) {
-            window.GameManagers.audio.playMenuSound();
+            try {
+                window.GameManagers.audio.playMenuSound();
+            } catch (e) {
+                console.warn('Audio error during menu transition:', e);
+            }
         }
         
         // Clean up collision system before transition
         this.cleanupCollisions();
         
-        // Go to menu scene
-        this.scene.start('MenuScene');
+        try {
+            // Go to menu scene immediately
+            this.scene.start('MenuScene');
+        } catch (e) {
+            console.error('Menu scene start error:', e);
+            // Reset flag if scene start fails
+            this.transitionInProgress = false;
+        }
     }
     
     togglePause() {
@@ -679,7 +818,56 @@ class GameScene extends Phaser.Scene {
     cleanupCollisions() {
         console.log('🧹 Cleaning up collision system...');
         
-        // First, stop physics immediately and safely
+        // Set ending flag FIRST to prevent any further updates
+        this.gameEnding = true;
+        this.gameData.isActive = false;
+        
+        // Stop entities from updating BEFORE stopping physics
+        try {
+            if (this.fires && this.fires.children && this.fires.children.entries) {
+                this.fires.children.entries.forEach(fire => {
+                    if (fire) {
+                        // Mark fire as inactive to stop its update loop
+                        fire.setActive(false);
+                        fire.setVisible(false);
+                        // Remove physics body safely
+                        if (fire.body) {
+                            fire.body.enable = false;
+                        }
+                    }
+                });
+                console.log('✅ Fire entities deactivated');
+            }
+            
+            if (this.firefighter) {
+                this.firefighter.setActive(false);
+                // Deactivate water particles group to prevent updates
+                const waterParticles = this.firefighter.getWaterParticles();
+                if (waterParticles && waterParticles.children && waterParticles.children.entries) {
+                    waterParticles.children.entries.forEach(particle => {
+                        if (particle) {
+                            particle.setActive(false);
+                            if (particle.body) {
+                                particle.body.enable = false;
+                            }
+                        }
+                    });
+                }
+                if (this.firefighter.body) {
+                    this.firefighter.body.enable = false;
+                }
+                console.log('✅ Firefighter and water particles deactivated');
+            }
+            
+            if (this.ground && this.ground.body) {
+                this.ground.body.enable = false;
+                console.log('✅ Ground physics disabled');
+            }
+        } catch (e) {
+            console.warn('Entity deactivation warning:', e);
+        }
+        
+        // Now safely pause physics after entities are inactive
         if (this.physics && this.physics.world) {
             try {
                 this.physics.pause();
@@ -702,39 +890,6 @@ class GameScene extends Phaser.Scene {
             });
             this.collisionObjects = [];
             console.log('✅ Collision objects cleared');
-        }
-        
-        // Stop entities from updating to prevent body access errors
-        try {
-            if (this.fires) {
-                this.fires.children.entries.forEach(fire => {
-                    if (fire) {
-                        // Mark fire as inactive to stop its update loop
-                        fire.setActive(false);
-                        fire.setVisible(false);
-                        // Remove physics body safely
-                        if (fire.body) {
-                            fire.body.enable = false;
-                        }
-                    }
-                });
-                console.log('✅ Fire entities deactivated');
-            }
-            
-            if (this.firefighter) {
-                this.firefighter.setActive(false);
-                if (this.firefighter.body) {
-                    this.firefighter.body.enable = false;
-                }
-                console.log('✅ Firefighter deactivated');
-            }
-            
-            if (this.ground && this.ground.body) {
-                this.ground.body.enable = false;
-                console.log('✅ Ground physics disabled');
-            }
-        } catch (e) {
-            console.warn('Entity deactivation warning:', e);
         }
     }
 } 

@@ -429,12 +429,23 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
     }
     
     createWaterParticle() {
+        // Safety check for water particles group
+        if (!this.waterParticles || !this.waterParticles.getFirstDead) {
+            console.warn('Water particles group not available');
+            return;
+        }
+        
         // Get or create water particle
         let waterParticle = this.waterParticles.getFirstDead();
         
         if (!waterParticle) {
-            waterParticle = new WaterParticle(this.scene, 0, 0);
-            this.waterParticles.add(waterParticle);
+            try {
+                waterParticle = new WaterParticle(this.scene, 0, 0);
+                this.waterParticles.add(waterParticle);
+            } catch (e) {
+                console.warn('Error creating water particle:', e);
+                return;
+            }
         }
         
         // Position and launch water particle - from the middle of the smaller firefighter
@@ -487,8 +498,14 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         // Reset water levels
         this.currentWater = this.maxWater;
         
-        // Clear all water particles
-        this.waterParticles.clear(true, true);
+        // Clear all water particles safely
+        if (this.waterParticles && this.waterParticles.clear) {
+            try {
+                this.waterParticles.clear(true, true);
+            } catch (e) {
+                console.warn('Error clearing water particles:', e);
+            }
+        }
         
         // Reset animations and maintain 50% bigger scale
         this.setScale(1.5); // Maintain the 50% bigger firefighter image scale
@@ -514,6 +531,11 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
     }
     
     getWaterParticles() {
+        // Return water particles group with safety check
+        if (!this.waterParticles) {
+            console.warn('Water particles group is undefined');
+            return null;
+        }
         return this.waterParticles;
     }
     
@@ -522,20 +544,26 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
     }
     
     destroy() {
-        // Clean up water particles
-        this.waterParticles.clear(true, true);
-        
-        // Clean up water bar UI
-        if (this.waterBarContainer) {
-            this.waterBarContainer.destroy();
-            this.waterBarContainer = null;
+        try {
+            // Clean up water particles safely
+            if (this.waterParticles && this.waterParticles.clear) {
+                this.waterParticles.clear(true, true);
+            }
+            
+            // Clean up water bar UI
+            if (this.waterBarContainer) {
+                this.waterBarContainer.destroy();
+                this.waterBarContainer = null;
+            }
+            this.waterBubbles = null;
+            this.waterPercentText = null;
+            this.waterTooltip = null;
+            
+            // Remove mobile event listeners
+            this.removeMobileControls();
+        } catch (e) {
+            console.warn('Firefighter cleanup warning:', e);
         }
-        this.waterBubbles = null;
-        this.waterPercentText = null;
-        this.waterTooltip = null;
-        
-        // Remove mobile event listeners
-        this.removeMobileControls();
         
         super.destroy();
     }
