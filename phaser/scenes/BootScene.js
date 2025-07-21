@@ -18,12 +18,51 @@ class BootScene extends Phaser.Scene {
         // Load the stage background image
         this.load.image('stage-background', 'assets/images/tomorrowland-pixel-stage.png');
         
-        // Load the animated firefighter sprite sheet
-        this.load.spritesheet('firefighter', 'assets/images/A_stylized_8_bit_pix...-119709497-1.png', {
-            frameWidth: 64,  // Try larger frame size again
-            frameHeight: 64, // Try larger frame size again
-            startFrame: 0,
-            endFrame: 15     // 16 frames total (0-15)
+        // Load the animated firefighter sprite sheet with flexible sizing
+        // Try different common frame sizes to find the right one
+        this.load.image('firefighter-test', 'assets/images/A_stylized_8_bit_pix...-119709497-1.png');
+        
+        // We'll load as spritesheet after checking dimensions
+        this.load.on('filecomplete-image-firefighter-test', () => {
+            const texture = this.textures.get('firefighter-test');
+            const image = texture.source[0];
+            console.log(`🖼️ Firefighter image dimensions: ${image.width}x${image.height}`);
+            
+            // Try to determine frame size based on common patterns
+            let frameWidth = 32;
+            let frameHeight = 32;
+            
+            // Common sprite sheet patterns
+            if (image.width === 128 && image.height === 128) {
+                frameWidth = 32; frameHeight = 32; // 4x4 grid
+            } else if (image.width === 256 && image.height === 256) {
+                frameWidth = 64; frameHeight = 64; // 4x4 grid
+            } else if (image.width === 512 && image.height === 128) {
+                frameWidth = 64; frameHeight = 64; // 8x2 grid
+            } else if (image.width === 256 && image.height === 64) {
+                frameWidth = 64; frameHeight = 64; // 4x1 grid
+            } else {
+                // Guess based on image size
+                frameWidth = Math.min(64, image.width / 4);
+                frameHeight = Math.min(64, image.height / 4);
+            }
+            
+            console.log(`🎯 Using frame size: ${frameWidth}x${frameHeight}`);
+            
+            // Now load as spritesheet with detected dimensions
+            this.load.spritesheet('firefighter', 'assets/images/A_stylized_8_bit_pix...-119709497-1.png', {
+                frameWidth: frameWidth,
+                frameHeight: frameHeight,
+                startFrame: 0,
+                endFrame: -1  // Load all available frames
+            });
+            
+            this.load.start(); // Restart loading for spritesheet
+        });
+        
+        // Add loading event to debug
+        this.load.on('filecomplete-spritesheet-firefighter', () => {
+            console.log('✅ Firefighter sprite sheet loaded successfully');
         });
         
         // Load fire sprite as image first to detect dimensions
