@@ -71,6 +71,9 @@ class GameScene extends Phaser.Scene {
             // Set up input
             this.setupInput();
             
+            // Create UI elements (X button, etc.)
+            this.createUIElements();
+            
             // Start game timer
             this.startGameTimer();
             
@@ -257,6 +260,63 @@ class GameScene extends Phaser.Scene {
                 window.debugGame.enablePhysicsDebug();
             });
         }
+    }
+    
+    createUIElements() {
+        console.log('🎨 Creating UI elements...');
+        
+        // Create X button in bottom right corner
+        const xButton = this.add.rectangle(950, 700, 50, 50, 0x000000, 0.8);
+        xButton.setStrokeStyle(2, 0xffffff);
+        xButton.setDepth(1000); // High depth to stay on top
+        
+        // Create X text
+        const xText = this.add.text(950, 700, '✕', {
+            fontSize: '24px',
+            fill: '#ffffff',
+            fontFamily: 'Arial, sans-serif',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(1001);
+        
+        // Make button interactive
+        xButton.setInteractive({ useHandCursor: true });
+        
+        // Button hover effects
+        xButton.on('pointerover', () => {
+            xButton.setFillStyle(0x333333, 0.9);
+            this.tweens.add({
+                targets: [xButton, xText],
+                scaleX: 1.1,
+                scaleY: 1.1,
+                duration: 150,
+                ease: 'Back.easeOut'
+            });
+        });
+        
+        xButton.on('pointerout', () => {
+            xButton.setFillStyle(0x000000, 0.8);
+            this.tweens.add({
+                targets: [xButton, xText],
+                scaleX: 1,
+                scaleY: 1,
+                duration: 150,
+                ease: 'Back.easeOut'
+            });
+        });
+        
+        // Button click handler
+        xButton.on('pointerdown', () => {
+            if (!this.transitionInProgress && !this.gameEnding) {
+                console.log('❌ X button pressed - returning to menu');
+                this.goToMainMenu();
+            }
+        });
+        
+        // Store references for cleanup
+        this.xButton = xButton;
+        this.xButtonText = xText;
+        
+        console.log('✅ UI elements created');
     }
     
     startGameTimer() {

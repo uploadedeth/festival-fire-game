@@ -25,9 +25,63 @@ class UIManager {
         this.updateTimer(60);
         this.updateFireCount(0);
         
+        // Add CSS animations for score popups
+        this.addScorePopupAnimations();
+        
         // Set up mobile controls if on touch device
         if (this.isTouchDevice()) {
             this.setupMobileControls();
+        }
+    }
+    
+    addScorePopupAnimations() {
+        // Add CSS animation for score popups if not already added
+        if (!document.querySelector('#score-popup-animations')) {
+            const style = document.createElement('style');
+            style.id = 'score-popup-animations';
+            style.textContent = `
+                @keyframes scorePopupTopRight {
+                    0% {
+                        opacity: 1;
+                        transform: translateY(0) scale(1);
+                    }
+                    25% {
+                        opacity: 1;
+                        transform: translateY(-10px) scale(1.2);
+                    }
+                    75% {
+                        opacity: 0.8;
+                        transform: translateY(-30px) scale(1);
+                    }
+                    100% {
+                        opacity: 0;
+                        transform: translateY(-50px) scale(0.8);
+                    }
+                }
+                
+                @keyframes notificationPop {
+                    0% {
+                        transform: translate(-50%, -50%) scale(0.8);
+                        opacity: 0;
+                    }
+                    100% {
+                        transform: translate(-50%, -50%) scale(1);
+                        opacity: 1;
+                    }
+                }
+                
+                @keyframes notificationFade {
+                    0% {
+                        transform: translate(-50%, -50%) scale(1);
+                        opacity: 1;
+                    }
+                    100% {
+                        transform: translate(-50%, -50%) scale(0.8);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
         }
     }
     
@@ -127,16 +181,16 @@ class UIManager {
         popup.innerHTML = `${emoji} +${points}`;
         popup.style.cssText = `
             position: fixed;
-            top: 45%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            top: 10%;
+            right: 5%;
+            transform: translateX(0);
             color: ${color};
             font-size: ${fontSize};
             font-weight: bold;
             z-index: 200;
             pointer-events: none;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            animation: scorePopup 1.5s ease-out forwards;
+            animation: scorePopupTopRight 2s ease-out forwards;
             font-family: Arial, sans-serif;
         `;
         
@@ -147,12 +201,12 @@ class UIManager {
             window.GameManagers.audio.playScorePopupSound();
         }
         
-        // Remove after animation
+        // Remove after animation (2 seconds to match new animation)
         setTimeout(() => {
             if (popup.parentNode) {
                 popup.parentNode.removeChild(popup);
             }
-        }, 1500);
+        }, 2000);
     }
     
     showGameStart() {
@@ -185,8 +239,7 @@ class UIManager {
             this.elements.mobileControls.classList.add('hidden');
         }
         
-        // Show final score notification
-        this.showNotification(`🎉 Challenge Complete! Final Score: ${finalScore} 🎉`, 3000);
+        // Removed final score notification since score is shown on end screen
     }
     
     showNotification(message, duration = 2000) {
