@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Festival Fire Fighter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <!-- HUD Elements -->
+        <div id="hud">
+            <div id="timer">60</div>
+            <div id="fires-count">Fires: 0</div>
+            <div id="score">Score: 0</div>
+        </div>
+
+        <!-- Game Menus -->
+        <div id="menu-screen" class="screen">
+            <h1>Festival Fire Fighter</h1>
+            <p>Survive 60 seconds of non-stop fire fighting! Extinguish fires to earn points:</p>
+            <div id="scoring-info">
+                <p>🔥 Small Fire: 10 points</p>
+                <p>🔥🔥 Medium Fire: 25 points</p>
+                <p>🔥🔥🔥 Large Fire: 50 points</p>
+            </div>
+            <button id="start-game">Start Challenge</button>
+            <div id="controls">
+                <h3>Controls:</h3>
+                <p>← → or A/D: Move</p>
+                <p>Spacebar: Spray Water</p>
+                <p>P: Pause</p>
+            </div>
+        </div>
+
+        <div id="victory-screen" class="screen hidden">
+            <h1>Victory!</h1>
+            <p>All fires extinguished!</p>
+            <div id="final-score">Final Score: 0</div>
+            <button id="play-again-victory">Play Again</button>
+            <button id="back-to-menu-victory">Main Menu</button>
+        </div>
+
+        <div id="defeat-screen" class="screen hidden">
+            <h1>Time's Up!</h1>
+            <p>The fires couldn't be contained in time!</p>
+            <div id="final-score-defeat">Final Score: 0</div>
+            <button id="play-again-defeat">Try Again</button>
+            <button id="back-to-menu-defeat">Main Menu</button>
+        </div>
+
+        <div id="pause-screen" class="screen hidden">
+            <h1>Paused</h1>
+            <button id="resume-game">Resume</button>
+            <button id="back-to-menu-pause">Main Menu</button>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div id="mobile-controls" class="hidden">
+            <button id="move-left" class="mobile-btn">←</button>
+            <button id="spray-water" class="mobile-btn">💧</button>
+            <button id="move-right" class="mobile-btn">→</button>
+        </div>
+    </div>
+
+    <!-- Load JavaScript modules -->
+    <script src="js/audio.js"></script>
+    <script src="js/collision.js"></script>
+    <script src="js/water.js"></script>
+    <script src="js/fire.js"></script>
+    <script src="js/firefighter.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html> 
