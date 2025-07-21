@@ -265,13 +265,13 @@ class GameScene extends Phaser.Scene {
     createUIElements() {
         console.log('🎨 Creating UI elements...');
         
-        // Create X button in bottom right corner
-        const xButton = this.add.rectangle(950, 700, 50, 50, 0x000000, 0.8);
+        // Create X button in top right corner
+        const xButton = this.add.rectangle(950, 70, 50, 50, 0x000000, 0.8);
         xButton.setStrokeStyle(2, 0xffffff);
         xButton.setDepth(1000); // High depth to stay on top
         
         // Create X text
-        const xText = this.add.text(950, 700, '✕', {
+        const xText = this.add.text(950, 70, '✕', {
             fontSize: '24px',
             fill: '#ffffff',
             fontFamily: 'Arial, sans-serif',
@@ -495,7 +495,7 @@ class GameScene extends Phaser.Scene {
             
             // Show score popup
             if (window.GameManagers.ui) {
-                window.GameManagers.ui.showScorePopup(fire.getScoreValue(), fire.getFireSize());
+                window.GameManagers.ui.showScorePopup(fire.getScoreValue(), fire.getFireSize(), this);
             }
             
             // Remove fire from group

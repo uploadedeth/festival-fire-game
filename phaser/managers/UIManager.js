@@ -40,7 +40,7 @@ class UIManager {
             const style = document.createElement('style');
             style.id = 'score-popup-animations';
             style.textContent = `
-                @keyframes scorePopupTopRight {
+                @keyframes scorePopupTopLeft {
                     0% {
                         opacity: 1;
                         transform: translateY(0) scale(1);
@@ -150,7 +150,76 @@ class UIManager {
         }
     }
     
-    showScorePopup(points, fireSize) {
+    showScorePopup(points, fireSize, scene) {
+        // If no scene provided, fall back to HTML popup (for backwards compatibility)
+        if (!scene || !scene.add) {
+            console.warn('No scene provided for score popup, using HTML fallback');
+            this.showHtmlScorePopup(points, fireSize);
+            return;
+        }
+        
+        // Different colors and sizes based on fire size
+        let color = '#4ecdc4';
+        let fontSize = 28;
+        let emoji = '💧';
+        
+        switch (fireSize) {
+            case 'small':
+                color = '#4ecdc4';
+                fontSize = 28;
+                emoji = '💧';
+                break;
+            case 'medium':
+                color = '#45b7d1';
+                fontSize = 36;
+                emoji = '🌊';
+                break;
+            case 'large':
+                color = '#96ceb4';
+                fontSize = 42;
+                emoji = '🌊💨';
+                break;
+        }
+        
+        // Create Phaser text object in top left corner of game canvas
+        const scoreText = scene.add.text(80, 70, `${emoji} +${points}`, {
+            fontSize: `${fontSize}px`,
+            fill: color,
+            fontFamily: 'Arial, sans-serif',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 3,
+            shadow: {
+                offsetX: 2,
+                offsetY: 2,
+                color: '#000000',
+                blur: 4,
+                fill: true
+            }
+        }).setOrigin(0.5).setDepth(1100); // Higher than X button
+        
+        // Animate the score popup
+        scene.tweens.add({
+            targets: scoreText,
+            y: scoreText.y - 50,
+            alpha: 0,
+            scaleX: 0.8,
+            scaleY: 0.8,
+            duration: 2000,
+            ease: 'Power2',
+            onComplete: () => {
+                scoreText.destroy();
+            }
+        });
+        
+        // Play sound effect
+        if (window.GameManagers.audio) {
+            window.GameManagers.audio.playScorePopupSound();
+        }
+    }
+    
+    // Fallback HTML popup method (kept for compatibility)
+    showHtmlScorePopup(points, fireSize) {
         // Create floating score popup
         const popup = document.createElement('div');
         popup.className = 'score-popup';
@@ -182,7 +251,7 @@ class UIManager {
         popup.style.cssText = `
             position: fixed;
             top: 10%;
-            right: 5%;
+            left: 5%;
             transform: translateX(0);
             color: ${color};
             font-size: ${fontSize};
@@ -190,16 +259,11 @@ class UIManager {
             z-index: 200;
             pointer-events: none;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-            animation: scorePopupTopRight 2s ease-out forwards;
+            animation: scorePopupTopLeft 2s ease-out forwards;
             font-family: Arial, sans-serif;
         `;
         
         document.body.appendChild(popup);
-        
-        // Play sound effect
-        if (window.GameManagers.audio) {
-            window.GameManagers.audio.playScorePopupSound();
-        }
         
         // Remove after animation (2 seconds to match new animation)
         setTimeout(() => {

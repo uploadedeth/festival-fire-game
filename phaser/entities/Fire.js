@@ -435,7 +435,7 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
             
             // Show score popup
             if (window.GameManagers.ui) {
-                window.GameManagers.ui.showScorePopup(this.scoreValue, this.fireSize);
+                window.GameManagers.ui.showScorePopup(this.scoreValue, this.fireSize, this.scene);
             }
         }
         
