@@ -63,17 +63,17 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
     }
     
     setupPhysics() {
-        // Physics body setup - make completely static
+        // Physics body setup - fires fall down slowly
         this.setCollideWorldBounds(false);
         this.setBounce(0, 0); // No bouncing at all
-        this.setDragX(0); // No drag needed for static objects
-        this.setDragY(0); // No vertical drag
+        this.setDragX(0); // No horizontal drag
+        this.setDragY(0); // No vertical drag initially
         
-        // Disable gravity for fires - they should stay exactly where placed
-        this.body.setGravityY(0);
+        // Enable gravity for falling effect - but use custom gravity
+        this.body.setGravityY(0); // Disable scene gravity, we'll handle our own
         
-        // Make fire immovable - it cannot be pushed by physics
-        this.body.setImmovable(true);
+        // Make fire immovable to other objects but allow falling
+        this.body.setImmovable(false);
         
         // Adjust hitbox based on size
         const sizeMap = {
@@ -85,11 +85,31 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
         const size = sizeMap[this.fireSize];
         this.body.setSize(size.width, size.height, true);
         
-        // Set max velocity to 0 - fires don't move
-        this.body.setMaxVelocity(0, 0);
+        // Set max velocity - allow vertical movement for falling
+        this.body.setMaxVelocity(0, 100); // No horizontal movement, moderate falling speed
         
-        // Ensure fire starts with zero velocity
-        this.setVelocity(0, 0);
+        // Set up custom falling behavior
+        this.setupFalling();
+    }
+    
+    setupFalling() {
+        // Random falling speed for each fire
+        this.fallSpeed = 15 + Math.random() * 25; // Random speed between 15-40 pixels/second
+        this.targetY = 600; // Bottom area where fires should settle
+        this.hasFallen = false;
+        this.fallStartDelay = Math.random() * 1000; // Random delay before starting to fall (0-1 second)
+        
+        // Start falling after delay
+        this.scene.time.delayedCall(this.fallStartDelay, () => {
+            this.startFalling();
+        });
+        
+        console.log(`🍃 Fire will fall at ${this.fallSpeed} px/s after ${this.fallStartDelay}ms delay`);
+    }
+    
+    startFalling() {
+        this.isFalling = true;
+        console.log(`🍃 Fire starts falling from Y: ${this.y} to Y: ${this.targetY}`);
     }
     
     setupMovement() {
@@ -217,8 +237,8 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
     update(time, delta) {
         if (this.isExtinguished) return;
         
-        // Ensure fire stays completely static
-        this.setVelocity(0, 0);
+        // Handle falling behavior
+        this.updateFalling(delta);
         
         // Simplified update - only essential updates to prevent glitching
         this.updateEffects(delta);
@@ -228,6 +248,29 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
         // Much reduced fire spreading chance
         if (Math.random() < this.spreadChance * 0.01) { // Very infrequent spreading
             this.attemptSpread();
+        }
+    }
+    
+    updateFalling(delta) {
+        if (this.isFalling && !this.hasFallen) {
+            // Check if fire has reached the bottom
+            if (this.y >= this.targetY) {
+                // Fire has reached the bottom, stop falling
+                this.setY(this.targetY);
+                this.setVelocityY(0);
+                this.hasFallen = true;
+                this.isFalling = false;
+                console.log(`🔥 Fire settled at bottom Y: ${this.y}`);
+            } else {
+                // Continue falling at custom speed
+                this.setVelocityY(this.fallSpeed);
+            }
+        } else if (this.hasFallen) {
+            // Fire has settled, keep it static
+            this.setVelocity(0, 0);
+        } else {
+            // Fire hasn't started falling yet, keep it static
+            this.setVelocity(0, 0);
         }
     }
     
@@ -259,28 +302,23 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
     }
     
     constrainPosition() {
-        // Keep fire within the actual stage platform bounds (not sky/mountains)
-        // Based on the background image, the stage platform is in the center
+        // Keep fire within the actual stage platform bounds horizontally
+        // But allow vertical falling until they reach the bottom
         const stageLeft = 200;   // Start of actual stage platform
         const stageRight = 824;  // End of actual stage platform
-        const stageTop = 320;    // Top of stage platform (below palace structures)
-        const stageBottom = 420; // Bottom of stage platform (above ground)
         
-        // Simply constrain position without any velocity changes
+        // Only constrain horizontally, let fires fall vertically
         if (this.x < stageLeft) {
             this.setX(stageLeft);
         } else if (this.x > stageRight - 40) {
             this.setX(stageRight - 40);
         }
         
-        if (this.y < stageTop) {
-            this.setY(stageTop);
-        } else if (this.y > stageBottom - 30) {
-            this.setY(stageBottom - 30);
+        // Don't constrain Y position while falling - let gravity work
+        // Only stop horizontal movement, preserve vertical falling
+        if (!this.isFalling || this.hasFallen) {
+            this.setVelocityX(0); // No horizontal movement
         }
-        
-        // Ensure fire stays completely static after any position adjustments
-        this.setVelocity(0, 0);
     }
     
     takeDamage(amount = 1) {
@@ -298,9 +336,13 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
         this.damageFlash = 0; // No flash
         this.setTint(0xffffff); // No blue flash
         
-        // No physical reaction - fire stays completely static
-        // Remove all jumping and movement effects
-        this.setVelocity(0, 0); // No movement at all
+        // Don't interfere with falling behavior
+        // Only stop horizontal movement, preserve vertical falling if active
+        if (!this.isFalling || this.hasFallen) {
+            this.setVelocity(0, 0); // Only stop movement if not falling
+        } else {
+            this.setVelocityX(0); // Stop horizontal, preserve falling
+        }
         
         // No screen shake - keep it static like vanilla
         
