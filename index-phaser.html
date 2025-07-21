@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Festival Fire Fighter - Phaser Edition</title>
+    <link rel="stylesheet" href="style-phaser.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <!-- Phaser will create the canvas here -->
+        
+        <!-- Loading screen -->
+        <div id="loading-screen">
+            <div class="loading-content">
+                <h1>🔥 Festival Fire Fighter 🚒</h1>
+                <div class="loading-bar">
+                    <div class="loading-progress"></div>
+                </div>
+                <p class="loading-text">Loading amazing effects...</p>
+            </div>
+        </div>
+        
+        <!-- UI Overlay for HUD elements -->
+        <div id="ui-overlay">
+            <div id="timer-display">60</div>
+            <div id="score-display">Score: 0</div>
+            <div id="fires-display">Fires: 0</div>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div id="mobile-controls" class="hidden">
+            <button id="move-left" class="mobile-btn">←</button>
+            <button id="spray-water" class="mobile-btn">💧</button>
+            <button id="move-right" class="mobile-btn">→</button>
+            <button id="pause-btn" class="mobile-btn">⏸</button>
+        </div>
+    </div>
+
+    <!-- Load Phaser 3 from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    
+    <!-- Load entities first -->
+    <script src="phaser/entities/Firefighter.js"></script>
+    <script src="phaser/entities/Fire.js"></script>
+    <script src="phaser/entities/WaterParticle.js"></script>
+    
+    <!-- Load managers -->
+    <script src="phaser/managers/ParticleManager.js"></script>
+    <script src="phaser/managers/AudioManager.js"></script>
+    <script src="phaser/managers/UIManager.js"></script>
+    
+    <!-- Load scenes -->
+    <script src="phaser/scenes/BootScene.js"></script>
+    <script src="phaser/scenes/MenuScene.js"></script>
+    <script src="phaser/scenes/GameScene.js"></script>
+    <script src="phaser/scenes/GameOverScene.js"></script>
+    
+    <!-- Load config after scenes are defined -->
+    <script src="phaser/config/GameConfig.js"></script>
+    
+    <!-- Load main game initialization last -->
+    <script src="phaser/main-phaser.js"></script>
+</body>
+</html> 
