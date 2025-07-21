@@ -1,4 +1,4 @@
-// MenuScene.js - Enhanced menu scene with Phaser UI
+// MenuScene.js - Simple menu scene with clean layout
 
 class MenuScene extends Phaser.Scene {
     constructor() {
@@ -6,95 +6,80 @@ class MenuScene extends Phaser.Scene {
     }
     
     create() {
-        // Create background
+        // Create same background as the game
         this.createBackground();
         
-        // Create title and UI elements
+        // Create simple title
         this.createTitle();
-        this.createMenu();
-        this.createInstructions();
         
-        // Create ambient effects
-        this.createAmbientEffects();
+        // Create start button
+        this.createStartButton();
+        
+        // Create points system (bottom right)
+        this.createPointsSystem();
+        
+        // Create controls (bottom left)
+        this.createControls();
         
         // Set up input
         this.setupInput();
         
-        console.log('🎪 Menu Scene loaded');
+        console.log('🎪 Simple Menu Scene loaded');
     }
     
     createBackground() {
-        // Festival stage background
-        const backdrop = this.add.image(400, 225, 'stage-backdrop').setOrigin(0.5, 0.5);
-        backdrop.setScale(1.4);
-        backdrop.setTint(0x444466);
+        // Use the same stage background as the game
+        const background = this.add.image(512, 384, 'stage-background');
         
-        // Stage platform
-        const platform = this.add.image(400, 525, 'stage-platform').setOrigin(0.5, 0.5);
-        platform.setScale(1.3);
+        // Scale to fit the 1024x768 canvas while maintaining aspect ratio
+        const scaleX = 1024 / background.width;
+        const scaleY = 768 / background.height;
+        const scale = Math.max(scaleX, scaleY);
+        background.setScale(scale);
         
-        // DJ booth
-        const djBooth = this.add.image(400, 200, 'dj-booth').setOrigin(0.5, 0.5);
-        djBooth.setScale(1.2);
-        
-        // Speakers
-        const leftSpeaker = this.add.image(150, 300, 'speaker').setOrigin(0.5, 0.5);
-        const rightSpeaker = this.add.image(650, 300, 'speaker').setOrigin(0.5, 0.5);
-        
-        // Add some visual effects to speakers
-        this.tweens.add({
-            targets: [leftSpeaker, rightSpeaker],
-            scaleX: 1.1,
-            scaleY: 1.1,
-            duration: 2000,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
+        // Add a slight dark overlay for better text readability
+        const overlay = this.add.rectangle(512, 384, 1024, 768, 0x000000, 0.3);
     }
     
     createTitle() {
-        // Main title
-        const title = this.add.text(400, 80, 'Festival Fire Fighter', {
-            fontSize: '52px',
+        // Main game title
+        const title = this.add.text(512, 200, 'Festival Fire Fighter', {
+            fontSize: '64px',
             fill: '#FF6B6B',
             fontFamily: 'Arial, sans-serif',
             fontStyle: 'bold',
             stroke: '#000000',
-            strokeThickness: 4,
+            strokeThickness: 6,
             shadow: {
-                offsetX: 3,
-                offsetY: 3,
+                offsetX: 4,
+                offsetY: 4,
                 color: '#000000',
-                blur: 5,
+                blur: 8,
                 fill: true
             }
         }).setOrigin(0.5);
         
         // Subtitle
-        const subtitle = this.add.text(400, 130, 'Phaser Edition with Amazing Effects!', {
+        const subtitle = this.add.text(512, 280, 'Extinguish fires and save the festival!', {
             fontSize: '24px',
             fill: '#4ECDC4',
             fontFamily: 'Arial, sans-serif',
             stroke: '#000000',
-            strokeThickness: 2
+            strokeThickness: 2,
+            shadow: {
+                offsetX: 2,
+                offsetY: 2,
+                color: '#000000',
+                blur: 4,
+                fill: true
+            }
         }).setOrigin(0.5);
         
-        // Animate title
+        // Simple title animation
         this.tweens.add({
             targets: title,
             scaleX: 1.05,
             scaleY: 1.05,
-            duration: 1500,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
-        
-        // Pulsing glow effect for subtitle
-        this.tweens.add({
-            targets: subtitle,
-            alpha: 0.7,
             duration: 2000,
             yoyo: true,
             repeat: -1,
@@ -102,43 +87,27 @@ class MenuScene extends Phaser.Scene {
         });
     }
     
-    createMenu() {
-        // Challenge description
-        const challengeText = this.add.text(400, 200, 'Survive 60 seconds of non-stop fire fighting!\nExtinguish fires to earn points:', {
-            fontSize: '20px',
+    createStartButton() {
+        // Large start button in center
+        const startButton = this.add.rectangle(512, 400, 300, 80, 0xFF6B6B);
+        startButton.setStrokeStyle(4, 0x000000);
+        
+        const startText = this.add.text(512, 400, 'START GAME', {
+            fontSize: '32px',
             fill: '#FFFFFF',
             fontFamily: 'Arial, sans-serif',
-            align: 'center',
-            lineSpacing: 8
-        }).setOrigin(0.5);
-        
-        // Scoring info
-        const scoringInfo = this.add.text(400, 260, '🔥 Small Fire: 10 points\n🔥🔥 Medium Fire: 25 points\n🔥🔥🔥 Large Fire: 50 points', {
-            fontSize: '18px',
-            fill: '#FFD700',
-            fontFamily: 'Arial, sans-serif',
-            align: 'center',
-            lineSpacing: 5
-        }).setOrigin(0.5);
-        
-        // Start button
-        const startButton = this.add.image(400, 350, 'button-bg').setOrigin(0.5);
-        const startButtonHover = this.add.image(400, 350, 'button-hover').setOrigin(0.5).setVisible(false);
-        const startText = this.add.text(400, 350, 'START CHALLENGE', {
-            fontSize: '28px',
-            fill: '#FFFFFF',
-            fontFamily: 'Arial, sans-serif',
-            fontStyle: 'bold'
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 2
         }).setOrigin(0.5);
         
         // Make button interactive
         startButton.setInteractive({ useHandCursor: true });
         
         startButton.on('pointerover', () => {
-            startButton.setVisible(false);
-            startButtonHover.setVisible(true);
+            startButton.setFillStyle(0xEE5A52);
             this.tweens.add({
-                targets: [startButtonHover, startText],
+                targets: [startButton, startText],
                 scaleX: 1.1,
                 scaleY: 1.1,
                 duration: 200,
@@ -147,8 +116,7 @@ class MenuScene extends Phaser.Scene {
         });
         
         startButton.on('pointerout', () => {
-            startButton.setVisible(true);
-            startButtonHover.setVisible(false);
+            startButton.setFillStyle(0xFF6B6B);
             this.tweens.add({
                 targets: [startButton, startText],
                 scaleX: 1,
@@ -159,7 +127,6 @@ class MenuScene extends Phaser.Scene {
         });
         
         startButton.on('pointerdown', () => {
-            // Button press effect
             this.tweens.add({
                 targets: [startButton, startText],
                 scaleX: 0.95,
@@ -172,94 +139,81 @@ class MenuScene extends Phaser.Scene {
             });
         });
         
-        // Store for hover effects
         this.startButton = startButton;
-        this.startButtonHover = startButtonHover;
         this.startText = startText;
     }
     
-    createInstructions() {
-        // Controls section
-        const controlsTitle = this.add.text(400, 420, 'CONTROLS:', {
-            fontSize: '22px',
-            fill: '#FF6B6B',
+    createPointsSystem() {
+        // Points system in bottom right corner
+        const pointsContainer = this.add.container(850, 650);
+        
+        // Background for points section
+        const pointsBg = this.add.rectangle(0, 0, 160, 100, 0x000000, 0.7);
+        pointsBg.setStrokeStyle(2, 0xFFD700);
+        pointsContainer.add(pointsBg);
+        
+        // Points title
+        const pointsTitle = this.add.text(0, -35, 'POINTS', {
+            fontSize: '16px',
+            fill: '#FFD700',
             fontFamily: 'Arial, sans-serif',
             fontStyle: 'bold'
         }).setOrigin(0.5);
+        pointsContainer.add(pointsTitle);
         
-        const controlsText = this.add.text(400, 470, '← → or A/D: Move    |    SPACEBAR: Spray Water    |    P: Pause', {
-            fontSize: '18px',
+        // Points breakdown
+        const pointsText = this.add.text(0, -5, 'Small Fire: 10\nMedium Fire: 25\nLarge Fire: 50', {
+            fontSize: '12px',
             fill: '#FFFFFF',
             fontFamily: 'Arial, sans-serif',
-            align: 'center'
+            align: 'center',
+            lineSpacing: 2
         }).setOrigin(0.5);
-        
-        // Mobile controls hint
-        if (this.isTouchDevice()) {
-            const mobileHint = this.add.text(400, 510, 'Touch controls will appear during gameplay', {
-                fontSize: '16px',
-                fill: '#4ECDC4',
-                fontFamily: 'Arial, sans-serif',
-                alpha: 0.8
-            }).setOrigin(0.5);
-        }
-        
-        // Version info
-        const versionText = this.add.text(400, 550, 'Phaser Edition v2.0 - Enhanced with Particle Effects', {
-            fontSize: '14px',
-            fill: '#888888',
-            fontFamily: 'Arial, sans-serif'
-        }).setOrigin(0.5);
+        pointsContainer.add(pointsText);
     }
     
-    createAmbientEffects() {
-        // Temporarily disable menu particle effects to prevent errors
-        console.log('🎪 Menu ambient effects disabled temporarily');
+    createControls() {
+        // Controls in bottom left corner
+        const controlsContainer = this.add.container(170, 650);
         
-        /* 
-        // Create some menu-specific particle effects
-        if (window.GameManagers.particle) {
-            // Ambient sparkles around the title
-            const sparkleConfig = {
-                frame: 'spark-particle',
-                x: { min: 200, max: 600 },
-                y: { min: 50, max: 150 },
-                speed: { min: 10, max: 30 },
-                scale: { start: 0.3, end: 0 },
-                alpha: { start: 0.8, end: 0 },
-                tint: [0xFFD700, 0xFF6B6B, 0x4ECDC4],
-                lifespan: { min: 2000, max: 4000 },
-                quantity: 1,
-                frequency: 1500,
-                gravityY: -20
-            };
-            
-            const menuSparkles = this.add.particles(400, 100, 'spark-particle', sparkleConfig);
-            menuSparkles.start();
+        // Background for controls section
+        const controlsBg = this.add.rectangle(0, 0, 160, 100, 0x000000, 0.7);
+        controlsBg.setStrokeStyle(2, 0x4ECDC4);
+        controlsContainer.add(controlsBg);
+        
+        // Controls title
+        const controlsTitle = this.add.text(0, -35, 'CONTROLS', {
+            fontSize: '16px',
+            fill: '#4ECDC4',
+            fontFamily: 'Arial, sans-serif',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+        controlsContainer.add(controlsTitle);
+        
+        // Controls text
+        const controlsText = this.add.text(0, -5, 'A/D: Move\nSPACE: Water\nP: Pause', {
+            fontSize: '12px',
+            fill: '#FFFFFF',
+            fontFamily: 'Arial, sans-serif',
+            align: 'center',
+            lineSpacing: 2
+        }).setOrigin(0.5);
+        controlsContainer.add(controlsText);
+        
+        // Mobile hint if applicable
+        if (this.isTouchDevice()) {
+            const mobileHint = this.add.text(0, 25, 'Touch controls\navailable', {
+                fontSize: '10px',
+                fill: '#888888',
+                fontFamily: 'Arial, sans-serif',
+                align: 'center'
+            }).setOrigin(0.5);
+            controlsContainer.add(mobileHint);
         }
-        
-        // Floating embers around the stage
-        const emberConfig = {
-            frame: 'ember-particle',
-            x: { min: 100, max: 700 },
-            y: 600,
-            speed: { min: 5, max: 20 },
-            scale: { start: 0.5, end: 0 },
-            alpha: { start: 0.6, end: 0 },
-            tint: [0xFF6347, 0xFF4500],
-            lifespan: { min: 3000, max: 6000 },
-            quantity: 1,
-            frequency: 2000,
-            gravityY: -15
-        };
-        
-        const menuEmbers = this.add.particles(400, 600, 'ember-particle', emberConfig);
-        menuEmbers.start();
-        */
     }
     
     setupInput() {
-        // Keyboard input
+        // Keyboard shortcuts
         this.input.keyboard.on('keydown-SPACE', () => {
             this.startGame();
         });
