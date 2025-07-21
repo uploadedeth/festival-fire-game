@@ -86,14 +86,14 @@ class GameScene extends Phaser.Scene {
             // Camera effects
             this.setupCamera();
             
-            // Start ambient effects
-            if (window.GameManagers.audio) {
-                try {
-                    window.GameManagers.audio.startAmbientSound();
-                } catch (e) {
-                    console.warn('Audio start error:', e);
-                }
-            }
+            // Start ambient effects - DISABLED to remove background humming
+            // if (window.GameManagers.audio) {
+            //     try {
+            //         window.GameManagers.audio.startAmbientSound();
+            //     } catch (e) {
+            //         console.warn('Audio start error:', e);
+            //     }
+            // }
             
             // Fade in from black
             this.cameras.main.fadeIn(1000, 0, 0, 0);
@@ -563,7 +563,7 @@ class GameScene extends Phaser.Scene {
         // Stop audio
         if (window.GameManagers.audio) {
             try {
-                window.GameManagers.audio.stopAmbientSound();
+                // window.GameManagers.audio.stopAmbientSound(); // Disabled since we don't start ambient sound
                 window.GameManagers.audio.playGameOverSound();
             } catch (e) {
                 console.warn('Audio cleanup failed:', e);
