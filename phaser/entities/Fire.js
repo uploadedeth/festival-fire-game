@@ -63,10 +63,17 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
     }
     
     setupPhysics() {
-        // Physics body setup - disable world bounds collision to prevent disappearing
+        // Physics body setup - make completely static
         this.setCollideWorldBounds(false);
-        this.setBounce(0.1, 0);
-        this.setDragX(100); // Ground friction
+        this.setBounce(0, 0); // No bouncing at all
+        this.setDragX(0); // No drag needed for static objects
+        this.setDragY(0); // No vertical drag
+        
+        // Disable gravity for fires - they should stay exactly where placed
+        this.body.setGravityY(0);
+        
+        // Make fire immovable - it cannot be pushed by physics
+        this.body.setImmovable(true);
         
         // Adjust hitbox based on size
         const sizeMap = {
@@ -78,7 +85,11 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
         const size = sizeMap[this.fireSize];
         this.body.setSize(size.width, size.height, true);
         
-        this.body.setMaxVelocity(80, 80); // Reduce max velocity to prevent fast movement
+        // Set max velocity to 0 - fires don't move
+        this.body.setMaxVelocity(0, 0);
+        
+        // Ensure fire starts with zero velocity
+        this.setVelocity(0, 0);
     }
     
     setupMovement() {
@@ -206,6 +217,9 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
     update(time, delta) {
         if (this.isExtinguished) return;
         
+        // Ensure fire stays completely static
+        this.setVelocity(0, 0);
+        
         // Simplified update - only essential updates to prevent glitching
         this.updateEffects(delta);
         this.updateHealthBar(); // Update health bar position
@@ -251,29 +265,21 @@ class Fire extends Phaser.Physics.Arcade.Sprite {
         const stageTop = 250;
         const stageBottom = 450;
         
+        // Simply constrain position without any velocity changes
         if (this.x < stageLeft) {
             this.setX(stageLeft);
-            if (this.body && this.body.velocity) {
-                this.setVelocityX(Math.abs(this.body.velocity.x));
-            }
         } else if (this.x > stageRight - 40) {
             this.setX(stageRight - 40);
-            if (this.body && this.body.velocity) {
-                this.setVelocityX(-Math.abs(this.body.velocity.x));
-            }
         }
         
         if (this.y < stageTop) {
             this.setY(stageTop);
-            if (this.body && this.body.velocity) {
-                this.setVelocityY(Math.abs(this.body.velocity.y));
-            }
         } else if (this.y > stageBottom - 30) {
             this.setY(stageBottom - 30);
-            if (this.body && this.body.velocity) {
-                this.setVelocityY(-Math.abs(this.body.velocity.y));
-            }
         }
+        
+        // Ensure fire stays completely static after any position adjustments
+        this.setVelocity(0, 0);
     }
     
     takeDamage(amount = 1) {
