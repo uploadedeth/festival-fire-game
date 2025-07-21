@@ -16,7 +16,10 @@ class BootScene extends Phaser.Scene {
         });
         
         // Load the stage background image
-        this.load.image('stage-background', 'assets/images/tomorrowland-pixel-stage2.png');
+        this.load.image('stage-background', 'assets/images/tomorrowland-pixel-stage.png');
+        
+        // Load the water bar background image
+        this.load.image('water-bar', 'assets/images/water-bar.png');
         
         // Load the animated firefighter sprite sheet with flexible sizing
         // Try different common frame sizes to find the right one

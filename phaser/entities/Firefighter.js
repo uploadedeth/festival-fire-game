@@ -181,23 +181,48 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         // Create water bar container in bottom left - bigger size
         this.waterBarContainer = this.scene.add.container(100, 700);
         
-        // Background for water bar - bigger dimensions
-        this.waterBarBg = this.scene.add.graphics();
-        this.waterBarBg.fillStyle(0x2c3e50, 0.8);
-        this.waterBarBg.fillRoundedRect(-90, -35, 180, 70, 10);
-        this.waterBarBg.lineStyle(2, 0x34495e);
-        this.waterBarBg.strokeRoundedRect(-90, -35, 180, 70, 10);
+        // Use the water-bar.png image as background instead of generated graphics
+        this.waterBarBg = this.scene.add.image(0, 0, 'water-bar');
+        this.waterBarBg.setOrigin(0.5, 0.5);
+        // Scale the image to fit our desired size (adjust as needed based on your image)
+        this.waterBarBg.setScale(0.22); // Adjust this scale based on your image size
+        
+        // Make water bar background interactive for hover tooltip
+        this.waterBarBg.setInteractive();
+        
+        // Create tooltip text (initially hidden)
+        this.waterTooltip = this.scene.add.text(0, -35, 'Water', {
+            fontSize: '14px',
+            fontFamily: 'Arial, sans-serif',
+            fill: '#ffffff',
+            align: 'center',
+            fontStyle: 'bold',
+            backgroundColor: '#000000',
+            padding: { x: 8, y: 4 }
+        }).setOrigin(0.5);
+        this.waterTooltip.setVisible(false);
+        
+        // Add hover events for tooltip
+        this.waterBarBg.on('pointerover', () => {
+            this.waterTooltip.setVisible(true);
+        });
+        
+        this.waterBarBg.on('pointerout', () => {
+            this.waterTooltip.setVisible(false);
+        });
+        
         this.waterBarContainer.add(this.waterBarBg);
+        this.waterBarContainer.add(this.waterTooltip);
         
         // Water bar title - bigger font
-        this.waterBarTitle = this.scene.add.text(0, -45, 'WATER', {
-            fontSize: '16px',
-            fontFamily: 'Arial, sans-serif',
-            fill: '#ecf0f1',
-            align: 'center',
-            fontStyle: 'bold'
-        }).setOrigin(0.5);
-        this.waterBarContainer.add(this.waterBarTitle);
+        // this.waterBarTitle = this.scene.add.text(0, -45, 'WATER', {
+        //     fontSize: '16px',
+        //     fontFamily: 'Arial, sans-serif',
+        //     fill: '#ecf0f1',
+        //     align: 'center',
+        //     fontStyle: 'bold'
+        // }).setOrigin(0.5);
+        // this.waterBarContainer.add(this.waterBarTitle);
         
         // Create water bubbles (10 bubbles total) - bigger bubbles
         this.waterBubbles = [];
@@ -240,7 +265,7 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         }).setOrigin(0.5);
         this.waterBarContainer.add(this.waterPercentText);
         
-        console.log('💧 Water bar UI created');
+        console.log('💧 Water bar UI created with custom background image');
     }
     
     update(time, delta) {
@@ -502,6 +527,7 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         }
         this.waterBubbles = null;
         this.waterPercentText = null;
+        this.waterTooltip = null;
         
         // Remove mobile event listeners
         this.removeMobileControls();
