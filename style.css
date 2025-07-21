@@ -15,6 +15,22 @@ body {
     user-select: none;
 }
 
+/* Iframe-specific styles */
+body.iframe-mode {
+    background: transparent;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100vh;
+}
+
+html.iframe-mode {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
 /* Game container */
 #gameContainer {
     width: 100%;
@@ -28,6 +44,16 @@ body {
     position: relative;
 }
 
+/* Iframe-specific game container */
+body.iframe-mode #gameContainer {
+    max-width: 100%;
+    height: 100vh;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+}
+
 /* Phaser canvas will be inserted here automatically */
 canvas {
     border: 2px solid #fff;
@@ -35,6 +61,15 @@ canvas {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     max-width: 100%;
     max-height: 100%;
+}
+
+/* Iframe-specific canvas */
+body.iframe-mode canvas {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    width: 100%;
+    height: 100%;
 }
 
 /* Loading Screen */

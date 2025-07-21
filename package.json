@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "http-server . -p 8080 -o",
     "build": "echo 'Building for production...' && echo 'Game ready for deployment'",
-    "start": "http-server . -p 8080"
+    "start": "http-server . -p 8080",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d .",
+    "deploy:manual": "echo 'Manual deployment: Push to main branch, enable GitHub Pages in repository settings'",
+    "test:iframe": "http-server . -p 8080 -o /iframe-test.html"
   },
   "keywords": [
     "phaser",
@@ -24,6 +28,7 @@
     "phaser": "^3.70.0"
   },
   "devDependencies": {
+    "gh-pages": "^6.3.0",
     "http-server": "^14.1.1"
   },
   "repository": {
@@ -33,4 +38,4 @@
   "engines": {
     "node": ">=14.0.0"
   }
-} 
+}

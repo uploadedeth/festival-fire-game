@@ -12,6 +12,10 @@ class FestivalFireFighterGame {
         this.loadingPercentage = document.querySelector('.loading-percentage');
         this.loadingSteps = document.querySelectorAll('.loading-step');
         
+        // Initialize iframe communication
+        this.isInIframe = window.self !== window.top;
+        this.setupCommunication();
+        
         // Initialize game
         this.init();
     }
@@ -24,6 +28,115 @@ class FestivalFireFighterGame {
         setTimeout(() => {
             this.createGame();
         }, 500);
+    }
+    
+    setupCommunication() {
+        if (this.isInIframe) {
+            // Listen for messages from parent window
+            window.addEventListener('message', (event) => {
+                // Security check - ensure message is from expected origin
+                // In production, replace with your domain
+                if (event.origin !== window.location.origin && event.origin !== 'https://your-nextjs-app.com') {
+                    return;
+                }
+                
+                const { type, data } = event.data;
+                
+                switch (type) {
+                    case 'PAUSE_GAME':
+                        this.pause();
+                        break;
+                    case 'RESUME_GAME':
+                        this.resume();
+                        break;
+                    case 'RESTART_GAME':
+                        this.restart();
+                        break;
+                    case 'GET_GAME_STATE':
+                        this.sendGameState();
+                        break;
+                    case 'MUTE_AUDIO':
+                        if (window.GameManagers.audio) {
+                            window.GameManagers.audio.mute();
+                        }
+                        break;
+                    case 'UNMUTE_AUDIO':
+                        if (window.GameManagers.audio) {
+                            window.GameManagers.audio.unmute();
+                        }
+                        break;
+                }
+            });
+            
+            // Send initial ready message to parent
+            this.postMessageToParent('GAME_READY', {
+                gameVersion: '2.0.0',
+                timestamp: Date.now()
+            });
+        }
+    }
+    
+    postMessageToParent(type, data = {}) {
+        if (this.isInIframe && window.parent) {
+            window.parent.postMessage({
+                type: type,
+                data: data,
+                source: 'festival-fire-fighter'
+            }, '*');
+        }
+    }
+    
+    sendGameState() {
+        if (this.game && this.game.scene.isActive('GameScene')) {
+            const gameScene = this.game.scene.getScene('GameScene');
+            this.postMessageToParent('GAME_STATE', {
+                score: gameScene.score || 0,
+                timeRemaining: gameScene.timeRemaining || 60,
+                firesRemaining: gameScene.fires ? gameScene.fires.children.entries.length : 0,
+                gameState: 'playing'
+            });
+        } else if (this.game && this.game.scene.isActive('GameOverScene')) {
+            const gameOverScene = this.game.scene.getScene('GameOverScene');
+            this.postMessageToParent('GAME_STATE', {
+                score: gameOverScene.finalScore || 0,
+                gameState: 'game_over',
+                victory: gameOverScene.victory || false
+            });
+        } else {
+            this.postMessageToParent('GAME_STATE', {
+                gameState: 'menu'
+            });
+        }
+    }
+    
+    setupGameEventListeners() {
+        if (this.isInIframe) {
+            // Listen for custom game events and send to parent
+            document.addEventListener('gameStart', () => {
+                this.postMessageToParent('GAME_STARTED');
+            });
+            
+            document.addEventListener('gameEnd', (event) => {
+                this.postMessageToParent('GAME_ENDED', {
+                    victory: event.detail.victory,
+                    score: event.detail.score,
+                    timeRemaining: event.detail.timeRemaining
+                });
+            });
+            
+            document.addEventListener('scoreUpdate', (event) => {
+                this.postMessageToParent('SCORE_UPDATE', {
+                    score: event.detail.score,
+                    points: event.detail.points
+                });
+            });
+            
+            document.addEventListener('fireExtinguished', (event) => {
+                this.postMessageToParent('FIRE_EXTINGUISHED', {
+                    firesRemaining: event.detail.firesRemaining
+                });
+            });
+        }
     }
     
     createGame() {
@@ -41,6 +154,9 @@ class FestivalFireFighterGame {
             
             // Set up global game reference
             window.phaserGame = this.game;
+            
+            // Set up game event listeners for iframe communication
+            this.setupGameEventListeners();
             
             // Set up loading progress tracking
             this.setupLoadingTracking();

@@ -1,237 +1,348 @@
-# Festival Fire Fighter
+# 🔥 Festival Fire Fighter
 
-A 2D browser-based firefighting game where players control a firefighter to extinguish fires on a festival stage within 60 seconds.
-
-![Game Screenshot](https://via.placeholder.com/800x400/87CEEB/000000?text=Festival+Fire+Fighter)
+A fast-paced 2D firefighting game built with Phaser 3, where players control a firefighter to extinguish fires on a festival stage within 60 seconds.
 
 ## 🎮 Game Overview
 
-Festival Fire Fighter is an action-packed game where you must race against time to extinguish all fires on a festival stage before the 60-second timer runs out. Use your water spray to put out fires, but watch out - fires can spread if left unattended!
+- **Objective**: Extinguish all fires before the 60-second timer expires
+- **Controls**: Arrow keys/WASD to move, Spacebar to spray water
+- **Scoring**: `1000 - (seconds_taken × 10)` (minimum: 0, maximum: 1000)
+- **Victory**: All fires extinguished before timer expires
+- **Defeat**: Timer expires with fires remaining
 
-### 🎯 Objective
-- Extinguish all fires before the timer reaches zero
-- Achieve the highest score possible
-- Quick reflexes and strategic thinking required!
+## 🚀 Quick Start
 
-### 🏆 Scoring
-- **Score Formula**: 1000 - (seconds_taken × 10)
-- **Maximum Score**: 1000 points (instant completion)
-- **Minimum Score**: 0 points
+### Local Development
 
-## 🕹️ Controls
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/festival-fire-game.git
+   cd festival-fire-game
+   ```
 
-### Keyboard Controls
-- **Arrow Keys** or **A/D**: Move left and right
-- **Spacebar**: Spray water (hold for continuous spray)
-- **P**: Pause/Resume game
-- **M**: Mute/Unmute audio
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-### Mobile Controls
-On touch devices, on-screen buttons will appear:
-- **←**: Move left
-- **💧**: Spray water
-- **→**: Move right
+3. **Run development server**
+   ```bash
+   npm run dev
+   ```
+   The game will open at `http://localhost:8080`
 
-## 🎮 How to Play
+4. **Test iframe integration**
+   ```bash
+   npm run test:iframe
+   ```
+   Opens the iframe test page at `http://localhost:8080/iframe-test.html`
 
-1. **Start the Game**: Click "Start Game" from the main menu
-2. **Move Around**: Use arrow keys or A/D to move your firefighter
-3. **Spray Water**: Hold spacebar to spray water at fires
-4. **Extinguish Fires**: Hit fires with water to damage them
-5. **Watch the Timer**: You have 60 seconds to extinguish all fires
-6. **Prevent Spreading**: Fires can spread to new locations if left burning
-7. **Win**: Extinguish all fires before time runs out!
+## 📦 Deployment to GitHub Pages
 
-## 🔥 Game Mechanics
+### Option 1: Automatic Deployment (Recommended)
 
-### Fire Types
-- **Small Fires**: 2 hits to extinguish (20×30 pixels)
-- **Medium Fires**: 4 hits to extinguish (30×40 pixels)  
-- **Large Fires**: 6 hits to extinguish (40×50 pixels)
+1. **Install gh-pages** (if not already installed)
+   ```bash
+   npm install --save-dev gh-pages
+   ```
 
-### Fire Behavior
-- Fires spawn randomly on the festival stage
-- After 8-15 seconds, fires may spread to nearby locations
-- New fires can spawn every 12 seconds
-- Maximum of 8 fires can exist at once
+2. **Update repository URL in package.json**
+   ```json
+   {
+     "repository": {
+       "type": "git",
+       "url": "https://github.com/YOUR-USERNAME/festival-fire-game.git"
+     }
+   }
+   ```
+
+3. **Deploy to GitHub Pages**
+   ```bash
+   npm run deploy
+   ```
+
+4. **Enable GitHub Pages in repository settings**
+   - Go to Settings → Pages
+   - Select source: "Deploy from a branch"
+   - Branch: `gh-pages`
+   - Folder: `/ (root)`
+
+### Option 2: Manual Deployment
+
+1. **Push to main branch**
+   ```bash
+   git add .
+   git commit -m "Deploy game to GitHub Pages"
+   git push origin main
+   ```
+
+2. **Enable GitHub Pages**
+   - Repository Settings → Pages
+   - Source: "Deploy from a branch"
+   - Branch: `main`
+   - Folder: `/ (root)`
+
+3. **Access your game**
+   ```
+   https://YOUR-USERNAME.github.io/festival-fire-game/
+   ```
+
+## 🔗 Iframe Integration for Next.js
+
+### Basic Integration
+
+```jsx
+// In your Next.js component
+export default function GamePage() {
+  const gameUrl = "https://YOUR-USERNAME.github.io/festival-fire-game/";
+  
+  return (
+    <div style={{ width: '100%', height: '600px' }}>
+      <iframe
+        src={gameUrl}
+        width="100%"
+        height="100%"
+        frameBorder="0"
+        allowFullScreen
+        title="Festival Fire Fighter"
+      />
+    </div>
+  );
+}
+```
+
+### Advanced Integration with Communication
+
+```jsx
+import { useEffect, useRef, useState } from 'react';
+
+export default function InteractiveGame() {
+  const iframeRef = useRef(null);
+  const [gameState, setGameState] = useState('loading');
+  const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    // Listen for messages from the game
+    const handleMessage = (event) => {
+      if (event.data.source === 'festival-fire-fighter') {
+        const { type, data } = event.data;
+        
+        switch (type) {
+          case 'GAME_READY':
+            setGameState('ready');
+            break;
+          case 'GAME_STARTED':
+            setGameState('playing');
+            break;
+          case 'GAME_ENDED':
+            setGameState('finished');
+            setScore(data.score);
+            break;
+          case 'SCORE_UPDATE':
+            setScore(data.score);
+            break;
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  const sendCommand = (command) => {
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({
+        type: command,
+        source: 'nextjs-parent'
+      }, '*');
+    }
+  };
+
+  return (
+    <div className="game-container">
+      <div className="game-controls">
+        <button onClick={() => sendCommand('PAUSE_GAME')}>Pause</button>
+        <button onClick={() => sendCommand('RESUME_GAME')}>Resume</button>
+        <button onClick={() => sendCommand('RESTART_GAME')}>Restart</button>
+        <div>Status: {gameState} | Score: {score}</div>
+      </div>
+      
+      <iframe
+        ref={iframeRef}
+        src="https://YOUR-USERNAME.github.io/festival-fire-game/"
+        width="100%"
+        height="600"
+        frameBorder="0"
+        allowFullScreen
+        title="Festival Fire Fighter"
+      />
+    </div>
+  );
+}
+```
+
+## 📨 PostMessage API Reference
+
+### Messages You Can Send to the Game
+
+| Message Type | Description |
+|--------------|-------------|
+| `PAUSE_GAME` | Pauses the current game |
+| `RESUME_GAME` | Resumes a paused game |
+| `RESTART_GAME` | Restarts the current game |
+| `GET_GAME_STATE` | Requests current game state |
+| `MUTE_AUDIO` | Mutes all game audio |
+| `UNMUTE_AUDIO` | Unmutes game audio |
+
+### Messages You'll Receive from the Game
+
+| Message Type | Data | Description |
+|--------------|------|-------------|
+| `GAME_READY` | `{ gameVersion, timestamp }` | Game loaded and ready |
+| `GAME_STARTED` | `{}` | Game session started |
+| `GAME_ENDED` | `{ victory, score, timeRemaining }` | Game session ended |
+| `SCORE_UPDATE` | `{ score, points }` | Score changed |
+| `FIRE_EXTINGUISHED` | `{ firesRemaining }` | Fire was extinguished |
+| `GAME_STATE` | `{ score, timeRemaining, firesRemaining, gameState }` | Current game state |
+
+### Example Message Format
+
+```javascript
+// Sending a message to the game
+iframe.contentWindow.postMessage({
+  type: 'PAUSE_GAME',
+  data: {},
+  source: 'your-app-name'
+}, '*');
+
+// Receiving a message from the game
+window.addEventListener('message', (event) => {
+  if (event.data.source === 'festival-fire-fighter') {
+    const { type, data } = event.data;
+    console.log('Received:', type, data);
+  }
+});
+```
+
+## 🛠️ Development
+
+### Project Structure
+
+```
+festival-fire-game/
+├── index.html              # Main game page
+├── iframe-test.html         # Iframe integration test
+├── style.css               # Game styling (includes iframe support)
+├── package.json            # Dependencies and scripts
+├── phaser/                 # Phaser game files
+│   ├── main-phaser.js      # Game initialization + postMessage API
+│   ├── config/
+│   │   └── GameConfig.js   # Phaser configuration
+│   ├── scenes/             # Game scenes
+│   │   ├── BootScene.js
+│   │   ├── MenuScene.js
+│   │   ├── GameScene.js
+│   │   └── GameOverScene.js
+│   ├── entities/           # Game entities
+│   │   ├── Firefighter.js
+│   │   ├── Fire.js
+│   │   └── WaterParticle.js
+│   └── managers/           # Game managers
+│       ├── AudioManager.js
+│       ├── UIManager.js
+│       └── ParticleManager.js
+└── assets/                 # Game assets
+    └── images/
+```
+
+### Available Scripts
+
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run deploy       # Deploy to GitHub Pages
+npm run test:iframe  # Test iframe integration locally
+```
+
+### Building for Production
+
+The game is built as a static site with no build process required. All assets are loaded via CDN or relative paths.
+
+## 🎯 Game Mechanics
+
+### Fire System
+- **Fire Types**: Small (2 hits), Medium (4 hits), Large (6 hits)
+- **Fire Spreading**: Fires can spread to new locations over time
+- **Random Spawning**: New fires appear at random stage positions
 
 ### Water Physics
-- Water particles have realistic gravity
-- Horizontal spread for natural spray pattern
-- Limited particle count for optimal performance
-- Visual feedback when hitting fires
+- **Realistic Physics**: Water particles follow gravity and physics
+- **Particle System**: Efficient particle management with object pooling
+- **Collision Detection**: Precise water-fire collision detection
 
-## 🛠️ Technical Features
+### Performance Optimization
+- **60 FPS Target**: Optimized for smooth gameplay
+- **Object Pooling**: Reuses water particles for performance
+- **Efficient Rendering**: Minimal draw calls and optimized sprites
 
-### Performance Optimized
-- **60 FPS target** on modern browsers
-- **Object pooling** for water particles
-- **Efficient collision detection**
-- **Canvas 2D rendering** with hardware acceleration
+## 🔧 Troubleshooting
 
-### Browser Compatibility
-- **Chrome 90+**
-- **Firefox 88+**
-- **Safari 14+**
-- **Edge 90+**
+### Common Issues
 
-### Mobile Support
-- Responsive design
-- Touch controls
-- Optimized performance for mobile devices
+1. **Game not loading in iframe**
+   - Check browser console for CORS errors
+   - Ensure the game URL is accessible
+   - Verify iframe `src` attribute
 
-## 🚀 Getting Started
+2. **PostMessage not working**
+   - Check message format matches API specification
+   - Verify `source` property in messages
+   - Ensure iframe is fully loaded before sending messages
 
-### Prerequisites
-- Modern web browser
-- No additional installations required!
+3. **Audio not working**
+   - Modern browsers require user interaction before playing audio
+   - Check if audio is muted via postMessage API
+   - Verify audio files are accessible
 
-### Running Locally
-1. Clone or download this repository
-2. Open `index.html` in your web browser
-3. Start playing immediately!
+4. **Performance issues**
+   - Reduce number of simultaneous water particles
+   - Check browser developer tools for performance bottlenecks
+   - Ensure hardware acceleration is enabled
 
-### Using a Local Server (Optional)
-```bash
-# Using Python 3
-python -m http.server 8000
+### GitHub Pages Deployment Issues
 
-# Using Node.js
-npx http-server
+1. **404 Error on GitHub Pages**
+   - Verify repository name matches URL
+   - Check that GitHub Pages is enabled in repository settings
+   - Ensure `index.html` is in the root directory
 
-# Using PHP
-php -S localhost:8000
-```
+2. **Assets not loading**
+   - Use relative paths for all assets
+   - Check case sensitivity in file names
+   - Verify all referenced files exist in the repository
 
-Then visit `http://localhost:8000` in your browser.
+## 📝 License
 
-## 📁 Project Structure
-
-```
-festival-fire-fighter/
-├── index.html           # Main game page
-├── style.css           # Game styling and responsive design
-├── js/
-│   ├── main.js         # Game initialization and main loop
-│   ├── game.js         # Game state management
-│   ├── firefighter.js  # Player character logic
-│   ├── fire.js         # Fire entities and spawning
-│   ├── water.js        # Water particle system
-│   ├── collision.js    # Collision detection
-│   ├── ui.js           # User interface management
-│   └── audio.js        # Procedural sound effects
-├── assets/
-│   ├── sprites/        # Game sprites (unused - uses shapes)
-│   └── sounds/         # Sound files (unused - uses Web Audio API)
-├── README.md           # This file
-├── CLAUDE.md           # Development specifications
-├── PLANNING.md         # Project planning document
-└── TASKS.md            # Development task breakdown
-```
-
-## 🎨 Features
-
-### Visual Effects
-- **Animated fires** with flickering flames
-- **Particle effects** for water spray and smoke
-- **Health bars** for fires showing damage
-- **Visual feedback** when fires are hit
-- **Dynamic lighting** effects
-
-### Audio Effects
-- **Procedural sound generation** using Web Audio API
-- **Water spray** sound effects
-- **Fire hit** and **extinguish** sounds
-- **Victory** and **defeat** music
-- **Mute/unmute** functionality
-
-### User Interface
-- **Responsive design** for all screen sizes
-- **Real-time HUD** showing timer, fires, and score
-- **Multiple game screens** (menu, victory, defeat, pause)
-- **Smooth transitions** and animations
-- **Mobile-friendly** touch controls
-
-## 🔧 Debug Mode
-
-Add `#debug` to the URL to enable debug features:
-```
-file:///path/to/index.html#debug
-```
-
-Debug features include:
-- FPS counter display
-- Console logging for game events
-- Performance monitoring
-
-## 🎯 Tips and Strategy
-
-1. **Prioritize Large Fires**: They take more hits to extinguish
-2. **Watch for Spread**: Keep fires from spreading by extinguishing quickly
-3. **Use Spray Efficiently**: Don't waste water on empty areas
-4. **Move Strategically**: Position yourself for optimal spray coverage
-5. **Monitor Timer**: Keep an eye on remaining time
-6. **Learn Fire Patterns**: Understand where fires tend to spawn
-
-## 📱 Mobile Experience
-
-The game is fully optimized for mobile devices:
-- **Responsive canvas** scaling
-- **Touch-friendly** controls
-- **Optimized performance** for mobile browsers
-- **Landscape orientation** recommended
-
-## 🏗️ Development
-
-### Built With
-- **Vanilla JavaScript** (ES6+)
-- **HTML5 Canvas** for rendering
-- **CSS3** for styling and animations
-- **Web Audio API** for sound effects
-
-### Architecture
-- **Modular design** with separate concerns
-- **Entity-component system** for game objects
-- **Object pooling** for performance
-- **Event-driven** state management
-
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
+MIT License - see LICENSE file for details.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Feel free to:
-- Report bugs
-- Suggest new features
-- Submit pull requests
-- Improve documentation
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 🆘 Support
+## 🎮 Credits
 
-Having issues? Check these common solutions:
-
-### Audio Not Working
-- Click on the game area to enable audio (browser security requirement)
-- Press 'M' to unmute if audio is disabled
-- Check browser audio settings
-
-### Performance Issues
-- Close other browser tabs
-- Try a different browser
-- Ensure hardware acceleration is enabled
-
-### Mobile Controls Not Appearing
-- Try refreshing the page
-- Ensure you're on a touch device
-- Check that JavaScript is enabled
-
-## 🎉 Acknowledgments
-
-- Inspired by classic arcade firefighting games
-- Built following modern web development best practices
-- Uses procedural audio generation for universal compatibility
+- **Game Engine**: [Phaser 3](https://phaser.io/)
+- **Framework**: Vanilla JavaScript + HTML5 Canvas
+- **Deployment**: GitHub Pages
+- **Development**: Festival Fire Fighter Team
 
 ---
 
-**Enjoy fighting the festival fires! 🔥🚒💧** 
+**Ready to fight some fires?** 🚒💨🔥
+
+Deploy your game and start extinguishing those festival fires! 

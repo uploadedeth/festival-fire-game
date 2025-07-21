@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Festival Fire Fighter - Iframe Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ecf0f1;
+        }
+        
+        .iframe-container {
+            background: #34495e;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .iframe-wrapper {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 8px;
+        }
+        
+        .controls {
+            background: #2c3e50;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .controls h3 {
+            margin-bottom: 15px;
+            color: #3498db;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+        
+        button.primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        button.success {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        button.warning {
+            background: #f39c12;
+            color: white;
+        }
+        
+        button.danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .status {
+            background: #34495e;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .status h4 {
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+        
+        .status pre {
+            background: #2c3e50;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+            font-size: 12px;
+            color: #ecf0f1;
+        }
+        
+        .info {
+            background: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2ecc71;
+        }
+        
+        .info h3 {
+            color: #2ecc71;
+            margin-bottom: 10px;
+        }
+        
+        .info p {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .responsive-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .iframe-wrapper {
+                height: 400px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Festival Fire Fighter - Iframe Integration Test</h1>
+        
+        <div class="info">
+            <h3>About This Test Page</h3>
+            <p>This page demonstrates how the Festival Fire Fighter game can be embedded in an iframe within a Next.js application or any other web platform.</p>
+            <p><strong>Game URL:</strong> <span id="gameUrl">Loading...</span></p>
+            <p><strong>Communication:</strong> The game supports postMessage API for parent-child communication.</p>
+        </div>
+        
+        <div class="iframe-container">
+            <h2>🔥 Game Iframe</h2>
+            <div class="iframe-wrapper">
+                <iframe 
+                    id="gameIframe" 
+                    src="./index.html"
+                    title="Festival Fire Fighter Game"
+                    allowfullscreen
+                    loading="lazy">
+                    Your browser does not support iframes.
+                </iframe>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <h3>🎛️ Iframe Communication Controls</h3>
+            
+            <div class="button-group">
+                <button class="primary" onclick="sendMessage('PAUSE_GAME')">⏸️ Pause Game</button>
+                <button class="success" onclick="sendMessage('RESUME_GAME')">▶️ Resume Game</button>
+                <button class="warning" onclick="sendMessage('RESTART_GAME')">🔄 Restart Game</button>
+                <button class="primary" onclick="sendMessage('GET_GAME_STATE')">📊 Get Game State</button>
+            </div>
+            
+            <div class="button-group">
+                <button class="danger" onclick="sendMessage('MUTE_AUDIO')">🔇 Mute Audio</button>
+                <button class="success" onclick="sendMessage('UNMUTE_AUDIO')">🔊 Unmute Audio</button>
+                <button class="primary" onclick="reloadIframe()">🔃 Reload Iframe</button>
+                <button class="warning" onclick="toggleFullscreen()">⛶ Toggle Fullscreen</button>
+            </div>
+        </div>
+        
+        <div class="status">
+            <h4>📡 Communication Status</h4>
+            <div>Last message sent: <span id="lastSent">None</span></div>
+            <div>Last message received: <span id="lastReceived">None</span></div>
+            <div>Connection status: <span id="connectionStatus">Waiting for game...</span></div>
+            
+            <h4 style="margin-top: 15px;">📋 Message Log</h4>
+            <pre id="messageLog">Waiting for game to load...\n</pre>
+        </div>
+        
+        <div class="responsive-info">
+            <div class="info">
+                <h3>🚀 Integration Instructions</h3>
+                <p><strong>For Next.js:</strong></p>
+                <p>1. Deploy this game to GitHub Pages</p>
+                <p>2. Use the iframe with the GitHub Pages URL</p>
+                <p>3. Listen for postMessage events from the game</p>
+                <p>4. Send commands using postMessage API</p>
+            </div>
+            
+            <div class="info">
+                <h3>📨 Available Messages</h3>
+                <p><strong>Send to game:</strong> PAUSE_GAME, RESUME_GAME, RESTART_GAME, GET_GAME_STATE, MUTE_AUDIO, UNMUTE_AUDIO</p>
+                <p><strong>Receive from game:</strong> GAME_READY, GAME_STARTED, GAME_ENDED, SCORE_UPDATE, FIRE_EXTINGUISHED, GAME_STATE</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const iframe = document.getElementById('gameIframe');
+        const lastSent = document.getElementById('lastSent');
+        const lastReceived = document.getElementById('lastReceived');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const messageLog = document.getElementById('messageLog');
+        const gameUrl = document.getElementById('gameUrl');
+        
+        // Set the game URL
+        gameUrl.textContent = window.location.origin + window.location.pathname.replace('iframe-test.html', 'index.html');
+        
+        let messageCount = 0;
+        
+        function logMessage(direction, type, data = {}) {
+            messageCount++;
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${direction}: ${type}${Object.keys(data).length ? ' - ' + JSON.stringify(data) : ''}\n`;
+            messageLog.textContent += logEntry;
+            messageLog.scrollTop = messageLog.scrollHeight;
+        }
+        
+        function sendMessage(type, data = {}) {
+            if (iframe.contentWindow) {
+                const message = {
+                    type: type,
+                    data: data,
+                    source: 'iframe-test-parent'
+                };
+                
+                iframe.contentWindow.postMessage(message, '*');
+                lastSent.textContent = `${type} (${new Date().toLocaleTimeString()})`;
+                logMessage('SENT', type, data);
+            } else {
+                alert('Game iframe not ready yet. Please wait for it to load.');
+            }
+        }
+        
+        function reloadIframe() {
+            iframe.src = iframe.src;
+            connectionStatus.textContent = 'Reloading...';
+            messageLog.textContent = 'Iframe reloaded...\n';
+        }
+        
+        function toggleFullscreen() {
+            if (iframe.requestFullscreen) {
+                iframe.requestFullscreen();
+            } else if (iframe.webkitRequestFullscreen) {
+                iframe.webkitRequestFullscreen();
+            } else if (iframe.msRequestFullscreen) {
+                iframe.msRequestFullscreen();
+            }
+        }
+        
+        // Listen for messages from the game
+        window.addEventListener('message', (event) => {
+            // Security check - ensure message is from our iframe
+            if (event.source !== iframe.contentWindow) {
+                return;
+            }
+            
+            const { type, data, source } = event.data;
+            
+            if (source === 'festival-fire-fighter') {
+                lastReceived.textContent = `${type} (${new Date().toLocaleTimeString()})`;
+                logMessage('RECEIVED', type, data);
+                
+                // Handle specific message types
+                switch (type) {
+                    case 'GAME_READY':
+                        connectionStatus.textContent = '✅ Connected and ready';
+                        connectionStatus.style.color = '#2ecc71';
+                        break;
+                    case 'GAME_STARTED':
+                        connectionStatus.textContent = '🎮 Game in progress';
+                        connectionStatus.style.color = '#3498db';
+                        break;
+                    case 'GAME_ENDED':
+                        connectionStatus.textContent = data.victory ? '🏆 Game won!' : '💥 Game over';
+                        connectionStatus.style.color = data.victory ? '#2ecc71' : '#e74c3c';
+                        break;
+                    case 'SCORE_UPDATE':
+                        connectionStatus.textContent = `🎯 Score: ${data.score}`;
+                        break;
+                    case 'GAME_STATE':
+                        connectionStatus.textContent = `📊 State: ${data.gameState}`;
+                        break;
+                }
+            }
+        });
+        
+        // Wait for iframe to load
+        iframe.addEventListener('load', () => {
+            connectionStatus.textContent = '🔄 Waiting for game ready signal...';
+            logMessage('INFO', 'Iframe loaded, waiting for game initialization');
+        });
+        
+        // Auto-request game state every 5 seconds
+        setInterval(() => {
+            if (connectionStatus.textContent.includes('Connected')) {
+                sendMessage('GET_GAME_STATE');
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
