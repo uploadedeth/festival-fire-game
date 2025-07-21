@@ -37,15 +37,15 @@ class MenuScene extends Phaser.Scene {
         const scale = Math.max(scaleX, scaleY);
         background.setScale(scale);
         
-        // Add a slight dark overlay for better text readability
-        const overlay = this.add.rectangle(512, 384, 1024, 768, 0x000000, 0.3);
+        // Add the same dark overlay as the loading screen for consistency
+        const overlay = this.add.rectangle(512, 384, 1024, 768, 0x000000, 0.6);
     }
     
     createTitle() {
         // Main game title
         const title = this.add.text(512, 200, 'Festival Fire Fighter', {
             fontSize: '64px',
-            fill: '#FF6B6B',
+            fill: '#4A90E2',  // Changed from red (#FF6B6B) to blue
             fontFamily: 'Arial, sans-serif',
             fontStyle: 'bold',
             stroke: '#000000',
@@ -89,7 +89,7 @@ class MenuScene extends Phaser.Scene {
     
     createStartButton() {
         // Large start button in center
-        const startButton = this.add.rectangle(512, 400, 300, 80, 0xFF6B6B);
+        const startButton = this.add.rectangle(512, 400, 300, 80, 0x4A90E2);  // Changed from red to blue
         startButton.setStrokeStyle(4, 0x000000);
         
         const startText = this.add.text(512, 400, 'START GAME', {
@@ -105,7 +105,7 @@ class MenuScene extends Phaser.Scene {
         startButton.setInteractive({ useHandCursor: true });
         
         startButton.on('pointerover', () => {
-            startButton.setFillStyle(0xEE5A52);
+            startButton.setFillStyle(0x357ABD);  // Darker blue for hover
             this.tweens.add({
                 targets: [startButton, startText],
                 scaleX: 1.1,
@@ -116,7 +116,7 @@ class MenuScene extends Phaser.Scene {
         });
         
         startButton.on('pointerout', () => {
-            startButton.setFillStyle(0xFF6B6B);
+            startButton.setFillStyle(0x4A90E2);  // Original blue
             this.tweens.add({
                 targets: [startButton, startText],
                 scaleX: 1,

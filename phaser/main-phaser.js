@@ -2,11 +2,17 @@
 
 class FestivalFireFighterGame {
     constructor() {
-        this.game = null;
+        // Initialize global managers object
+        window.GameManagers = {};
+        
+        // Get loading screen elements
         this.loadingScreen = document.getElementById('loading-screen');
         this.loadingProgress = document.querySelector('.loading-progress');
         this.loadingText = document.querySelector('.loading-text');
+        this.loadingPercentage = document.querySelector('.loading-percentage');
+        this.loadingSteps = document.querySelectorAll('.loading-step');
         
+        // Initialize game
         this.init();
     }
     
@@ -49,34 +55,46 @@ class FestivalFireFighterGame {
     }
     
     setupLoadingTracking() {
-        // Track loading progress across all scenes
-        let totalProgress = 0;
-        let loadingSteps = [
-            { text: 'Loading fire textures...', progress: 20 },
-            { text: 'Creating particle effects...', progress: 40 },
-            { text: 'Setting up physics...', progress: 60 },
-            { text: 'Initializing audio...', progress: 80 },
-            { text: 'Ready to fight fires!', progress: 100 }
-        ];
-        
+        // Track loading progress across all scenes with festival branding
         let currentStep = 0;
-        
+        let loadingSteps = [
+            { text: 'Setting up the festival stage...', progress: 15, stepIndex: 0 },
+            { text: 'Igniting the fires...', progress: 35, stepIndex: 1 },
+            { text: 'Charging the water cannons...', progress: 60, stepIndex: 2 },
+            { text: 'Preparing the firefighter...', progress: 85, stepIndex: 3 },
+            { text: 'Festival Fire Fighter ready!', progress: 100, stepIndex: 3 }
+        ];
+
         const updateLoading = () => {
             if (currentStep < loadingSteps.length) {
                 const step = loadingSteps[currentStep];
                 this.updateLoadingProgress(step.progress, step.text);
+                this.updateLoadingSteps(step.stepIndex);
                 currentStep++;
                 
                 if (currentStep < loadingSteps.length) {
-                    setTimeout(updateLoading, 600);
+                    setTimeout(updateLoading, 800); // Slightly slower for better UX
                 } else {
-                    setTimeout(() => this.hideLoadingScreen(), 800);
+                    setTimeout(() => this.hideLoadingScreen(), 1000);
                 }
             }
         };
-        
+
         // Start loading animation
-        setTimeout(updateLoading, 300);
+        setTimeout(updateLoading, 500);
+    }
+    
+    updateLoadingSteps(activeIndex) {
+        if (this.loadingSteps) {
+            this.loadingSteps.forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                if (index < activeIndex) {
+                    step.classList.add('completed');
+                } else if (index === activeIndex) {
+                    step.classList.add('active');
+                }
+            });
+        }
     }
     
     showLoadingScreen() {
@@ -99,6 +117,9 @@ class FestivalFireFighterGame {
         }
         if (this.loadingText) {
             this.loadingText.textContent = text;
+        }
+        if (this.loadingPercentage) {
+            this.loadingPercentage.textContent = `${percentage}%`;
         }
     }
     

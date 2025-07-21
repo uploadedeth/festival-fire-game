@@ -12,12 +12,29 @@
         
         <!-- Loading screen -->
         <div id="loading-screen">
+            <div class="loading-background">
+                <!-- Background will be set via CSS to match game background -->
+            </div>
             <div class="loading-content">
-                <h1>🔥 Festival Fire Fighter 🚒</h1>
-                <div class="loading-bar">
-                    <div class="loading-progress"></div>
+                <h1 class="loading-title">Festival Fire Fighter</h1>
+                <p class="loading-subtitle">Preparing the festival stage...</p>
+                
+                <div class="loading-bar-container">
+                    <div class="loading-bar">
+                        <div class="loading-progress"></div>
+                    </div>
+                    <div class="loading-percentage">0%</div>
                 </div>
+                
                 <p class="loading-text">Loading amazing effects...</p>
+                
+                <!-- Loading steps indicators -->
+                <div class="loading-steps">
+                    <div class="loading-step active">🎪</div>
+                    <div class="loading-step">🔥</div>
+                    <div class="loading-step">💧</div>
+                    <div class="loading-step">🚒</div>
+                </div>
             </div>
         </div>
         
