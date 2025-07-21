@@ -20,10 +20,10 @@ class BootScene extends Phaser.Scene {
         
         // Load the animated firefighter sprite sheet
         this.load.spritesheet('firefighter', 'assets/images/A_stylized_8_bit_pix...-119709497-1.png', {
-            frameWidth: 64,  // Firefighter frame size
-            frameHeight: 64, // Firefighter frame size
+            frameWidth: 64,  // Try larger frame size again
+            frameHeight: 64, // Try larger frame size again
             startFrame: 0,
-            endFrame: 15     // Firefighter frames
+            endFrame: 15     // 16 frames total (0-15)
         });
         
         // Load fire sprite as image first to detect dimensions
@@ -261,131 +261,91 @@ class BootScene extends Phaser.Scene {
             // Get the texture to see how many frames we have
             const texture = this.textures.get('firefighter');
             const frameCount = texture.frameTotal;
-            console.log(`📊 Available frames: ${frameCount}`);
+            const source = texture.source[0];
+            console.log(`📊 Firefighter sprite sheet info:`);
+            console.log(`  - Image dimensions: ${source.width}x${source.height}`);
+            console.log(`  - Frame size: 32x32`);
+            console.log(`  - Expected frames: 16 (4x4 grid)`);
+            console.log(`  - Actual frames: ${frameCount}`);
             
-            // Based on user's sprite sheet layout:
-            // Row 1 (0-3): Idle - use frames 0 and 2
-            // Row 2 (4-7): Moving right
-            // Row 3 (8-11): Moving up (skip)
-            // Row 4 (12-15): Moving left
+            // Clear any existing firefighter animations first
+            const existingAnims = ['firefighter-idle-left', 'firefighter-idle-right', 'firefighter-walk-left', 'firefighter-walk-right'];
+            existingAnims.forEach(animKey => {
+                if (this.anims.exists(animKey)) {
+                    this.anims.remove(animKey);
+                }
+            });
             
-            if (frameCount >= 16) {
-                
-                // Idle animations using Row 1 - frames 0 and 2 only
-                this.anims.create({
-                    key: 'firefighter-idle-left',
-                    frames: [
-                        { key: 'firefighter', frame: 0 },
-                        { key: 'firefighter', frame: 2 }
-                    ],
-                    frameRate: 6, // Increased from 2 to 6 for 3x faster animation
-                    repeat: -1
-                });
-                
-                this.anims.create({
-                    key: 'firefighter-idle-right',
-                    frames: [
-                        { key: 'firefighter', frame: 0 },
-                        { key: 'firefighter', frame: 2 }
-                    ],
-                    frameRate: 6, // Increased from 2 to 6 for 3x faster animation
-                    repeat: -1
-                });
-                
-                // Walking left animation using Row 4 (frames 12-15)
-                this.anims.create({
-                    key: 'firefighter-walk-left',
-                    frames: this.anims.generateFrameNumbers('firefighter', { start: 12, end: 15 }),
-                    frameRate: 8,
-                    repeat: -1
-                });
-                
-                // Walking right animation using Row 2 (frames 4-7)
-                this.anims.create({
-                    key: 'firefighter-walk-right',
-                    frames: this.anims.generateFrameNumbers('firefighter', { start: 4, end: 7 }),
-                    frameRate: 8,
-                    repeat: -1
-                });
-                
-            } else if (frameCount >= 8) {
-                // Fallback for smaller sprite sheets
-                this.anims.create({
-                    key: 'firefighter-idle-left',
-                    frames: [{ key: 'firefighter', frame: 0 }],
-                    frameRate: 1,
-                    repeat: 0
-                });
-                
-                this.anims.create({
-                    key: 'firefighter-idle-right',
-                    frames: [{ key: 'firefighter', frame: 0 }],
-                    frameRate: 1,
-                    repeat: 0
-                });
-                
-                this.anims.create({
-                    key: 'firefighter-walk-left',
-                    frames: this.anims.generateFrameNumbers('firefighter', { start: 4, end: 7 }),
-                    frameRate: 6,
-                    repeat: -1
-                });
-                
-                this.anims.create({
-                    key: 'firefighter-walk-right',
-                    frames: this.anims.generateFrameNumbers('firefighter', { start: 0, end: 3 }),
-                    frameRate: 6,
-                    repeat: -1
-                });
-                
-            } else {
-                // Very few frames, use fallback
-                this.createFallbackAnimations();
-                return;
-            }
+            // Frame layout based on user specification (converting from 1-based to 0-based):
+            // User frame 1,3 = Phaser frame 0,2 for idle
+            // User frame 5,6,7,8 = Phaser frame 4,5,6,7 for moving right  
+            // User frame 13,14,15,16 = Phaser frame 12,13,14,15 for moving left
             
-            // Create test animations to see specific rows
-            console.log('🎬 Creating test animations for each row...');
+            // Idle animations using frames 0 and 2 (user frames 1 and 3)
             this.anims.create({
-                key: 'firefighter-test-row1-idle',
+                key: 'firefighter-idle-left',
                 frames: [
-                    { key: 'firefighter', frame: 0 },
-                    { key: 'firefighter', frame: 2 }
+                    { key: 'firefighter', frame: 0 }, // User frame 1
+                    { key: 'firefighter', frame: 2 }  // User frame 3
                 ],
-                frameRate: 2,
+                frameRate: 6,
                 repeat: -1
             });
             
             this.anims.create({
-                key: 'firefighter-test-row2-right',
-                frames: this.anims.generateFrameNumbers('firefighter', { start: 4, end: 7 }),
-                frameRate: 4,
+                key: 'firefighter-idle-right',
+                frames: [
+                    { key: 'firefighter', frame: 0 }, // User frame 1
+                    { key: 'firefighter', frame: 2 }  // User frame 3
+                ],
+                frameRate: 6,
                 repeat: -1
             });
             
+            // Walking right animation using frames 4,5,6,7 (user frames 5,6,7,8)
             this.anims.create({
-                key: 'firefighter-test-row4-left',
-                frames: this.anims.generateFrameNumbers('firefighter', { start: 12, end: 15 }),
-                frameRate: 4,
+                key: 'firefighter-walk-right',
+                frames: [
+                    { key: 'firefighter', frame: 4 }, // User frame 5
+                    { key: 'firefighter', frame: 5 }, // User frame 6
+                    { key: 'firefighter', frame: 6 }, // User frame 7
+                    { key: 'firefighter', frame: 7 }  // User frame 8
+                ],
+                frameRate: 8,
+                repeat: -1
+            });
+            
+            // Walking left animation using frames 12,13,14,15 (user frames 13,14,15,16)
+            this.anims.create({
+                key: 'firefighter-walk-left',
+                frames: [
+                    { key: 'firefighter', frame: 12 }, // User frame 13
+                    { key: 'firefighter', frame: 13 }, // User frame 14
+                    { key: 'firefighter', frame: 14 }, // User frame 15
+                    { key: 'firefighter', frame: 15 }  // User frame 16
+                ],
+                frameRate: 8,
                 repeat: -1
             });
             
             console.log('✅ Firefighter animations created successfully');
-            console.log('💡 Press T for Row 1 idle, Y for Row 2 right, U for Row 4 left');
+            console.log('📝 Frame mapping (User frames → Phaser frames):');
+            console.log('  - Idle: User frames 1,3 → Phaser frames 0,2');
+            console.log('  - Walk right: User frames 5,6,7,8 → Phaser frames 4,5,6,7');  
+            console.log('  - Walk left: User frames 13,14,15,16 → Phaser frames 12,13,14,15');
+            console.log('  - Total frames available:', frameCount);
             
         } catch (error) {
             console.error('❌ Error creating firefighter animations:', error);
-            
-            // Fallback: create minimal animations
-            this.createFallbackAnimations();
+            this.createFallbackFirefighterAnimations();
         }
     }
     
-    createFallbackAnimations() {
+    createFallbackFirefighterAnimations() {
         try {
-            console.log('🔄 Creating fallback animations...');
+            console.log('🔄 Creating fallback firefighter animations...');
             
-            // Simple fallback animations using just the first frame
+            // Simple fallback animations using just the first few frames
             this.anims.create({
                 key: 'firefighter-idle-left',
                 frames: [{ key: 'firefighter', frame: 0 }],
@@ -410,10 +370,10 @@ class BootScene extends Phaser.Scene {
                 frameRate: 1
             });
             
-            console.log('✅ Fallback animations created');
+            console.log('✅ Fallback firefighter animations created');
             
         } catch (error) {
-            console.error('❌ Failed to create fallback animations:', error);
+            console.error('❌ Failed to create fallback firefighter animations:', error);
         }
     }
 } 

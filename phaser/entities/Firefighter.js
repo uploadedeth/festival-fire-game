@@ -58,8 +58,9 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         this.setBounce(0);
         this.setDragX(800); // Ground friction
         
-        // Adjust hitbox for the 50% bigger scaled image
-        const scaledSize = 64 * 1.5; // Now 96x96 for the 50% bigger firefighter
+        // Adjust hitbox for the 64x64 frame size with 1.5x scale
+        const baseFrameSize = 64; // Back to 64x64 frame size
+        const scaledSize = baseFrameSize * 1.5; // 96x96 for the scaled firefighter
         this.body.setSize(scaledSize * 0.8, scaledSize * 0.9, true); // Most of the scaled image size
         this.body.setMaxVelocity(this.moveSpeed, 1000);
         
@@ -73,8 +74,18 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         this.currentAnimation = null;
         this.facing = 'right';
         
+        // Ensure proper scale is set before starting animations
+        this.setScale(1.5); // Maintain the 50% bigger size
+        
+        // Ensure clean visual state
+        this.setAlpha(1);
+        this.setVisible(true);
+        this.setTint(0xffffff);
+        
         // Start with idle animation
         this.playAnimation('firefighter-idle-right');
+        
+        console.log('🚒 Firefighter animations setup complete');
     }
     
     playAnimation(animationKey) {
@@ -82,17 +93,29 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
             // Check if the animation exists
             if (!this.scene.anims.exists(animationKey)) {
                 console.warn(`⚠️ Animation '${animationKey}' does not exist`);
+                console.log('Available animations:', Object.keys(this.scene.anims.anims.entries));
                 return;
             }
             
             if (this.currentAnimation !== animationKey) {
                 this.currentAnimation = animationKey;
+                
+                // Ensure firefighter is in good state before playing animation
+                this.setScale(1.5);
+                this.setAlpha(1);
+                this.setVisible(true);
+                this.setTint(0xffffff);
+                
                 this.play(animationKey);
                 console.log(`🎭 Playing animation: ${animationKey}`);
             }
         } catch (error) {
             console.error(`❌ Error playing animation '${animationKey}':`, error);
-            // Fallback: just set the texture to the first frame
+            // Fallback: ensure firefighter is visible and set to first frame
+            this.setScale(1.5);
+            this.setAlpha(1);
+            this.setVisible(true);
+            this.setTint(0xffffff);
             this.setFrame(0);
         }
     }
@@ -343,14 +366,17 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         // Clear all water particles
         this.waterParticles.clear(true, true);
         
-        // Reset animations and maintain 50% bigger scale
+        // Reset visual state completely
         this.setScale(1.5); // Maintain the 50% bigger firefighter image scale
+        this.setAlpha(1);
+        this.setVisible(true);
         this.setTint(0xffffff);
+        this.currentAnimation = null; // Reset animation state
         
         // Reset to idle animation
         this.playAnimation('firefighter-idle-right');
         
-        console.log('🚒 Firefighter reset');
+        console.log('🚒 Firefighter reset - scale: 1.5, alpha: 1, visible: true');
     }
     
     takeDamage() {
