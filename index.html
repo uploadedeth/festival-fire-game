@@ -8,53 +8,41 @@
 </head>
 <body>
     <div id="gameContainer">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <!-- Phaser will create the canvas here -->
         
-        <!-- HUD Elements -->
-        <div id="hud">
-            <div id="timer">60</div>
-            <div id="fires-count">Fires: 0</div>
-            <div id="score">Score: 0</div>
-        </div>
-
-        <!-- Game Menus -->
-        <div id="menu-screen" class="screen">
-            <h1>Festival Fire Fighter</h1>
-            <p>Survive 60 seconds of non-stop fire fighting! Extinguish fires to earn points:</p>
-            <div id="scoring-info">
-                <p>🔥 Small Fire: 10 points</p>
-                <p>🔥🔥 Medium Fire: 25 points</p>
-                <p>🔥🔥🔥 Large Fire: 50 points</p>
+        <!-- Loading screen -->
+        <div id="loading-screen">
+            <div class="loading-background">
+                <!-- Background will be set via CSS to match game background -->
             </div>
-            <button id="start-game">Start Challenge</button>
-            <div id="controls">
-                <h3>Controls:</h3>
-                <p>← → or A/D: Move</p>
-                <p>Spacebar: Spray Water</p>
-                <p>P: Pause</p>
+            <div class="loading-content">
+                <h1 class="loading-title">Festival Fire Fighter</h1>
+                <p class="loading-subtitle">Preparing the festival stage...</p>
+                
+                <div class="loading-bar-container">
+                    <div class="loading-bar">
+                        <div class="loading-progress"></div>
+                    </div>
+                    <div class="loading-percentage">0%</div>
+                </div>
+                
+                <p class="loading-text">Loading amazing effects...</p>
+                
+                <!-- Loading steps indicators -->
+                <div class="loading-steps">
+                    <div class="loading-step active">🎪</div>
+                    <div class="loading-step">🔥</div>
+                    <div class="loading-step">💧</div>
+                    <div class="loading-step">🚒</div>
+                </div>
             </div>
         </div>
-
-        <div id="victory-screen" class="screen hidden">
-            <h1>Victory!</h1>
-            <p>All fires extinguished!</p>
-            <div id="final-score">Final Score: 0</div>
-            <button id="play-again-victory">Play Again</button>
-            <button id="back-to-menu-victory">Main Menu</button>
-        </div>
-
-        <div id="defeat-screen" class="screen hidden">
-            <h1>Time's Up!</h1>
-            <p>The fires couldn't be contained in time!</p>
-            <div id="final-score-defeat">Final Score: 0</div>
-            <button id="play-again-defeat">Try Again</button>
-            <button id="back-to-menu-defeat">Main Menu</button>
-        </div>
-
-        <div id="pause-screen" class="screen hidden">
-            <h1>Paused</h1>
-            <button id="resume-game">Resume</button>
-            <button id="back-to-menu-pause">Main Menu</button>
+        
+        <!-- UI Overlay for HUD elements -->
+        <div id="ui-overlay">
+            <div id="timer-display">60</div>
+            <div id="score-display">Score: 0</div>
+            <div id="fires-display">Fires: 0</div>
         </div>
 
         <!-- Mobile Controls -->
@@ -62,17 +50,33 @@
             <button id="move-left" class="mobile-btn">←</button>
             <button id="spray-water" class="mobile-btn">💧</button>
             <button id="move-right" class="mobile-btn">→</button>
+            <button id="pause-btn" class="mobile-btn">⏸</button>
         </div>
     </div>
 
-    <!-- Load JavaScript modules -->
-    <script src="js/audio.js"></script>
-    <script src="js/collision.js"></script>
-    <script src="js/water.js"></script>
-    <script src="js/fire.js"></script>
-    <script src="js/firefighter.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/game.js"></script>
-    <script src="js/main.js"></script>
+    <!-- Load Phaser 3 from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    
+    <!-- Load entities first -->
+    <script src="phaser/entities/Firefighter.js"></script>
+    <script src="phaser/entities/Fire.js"></script>
+    <script src="phaser/entities/WaterParticle.js"></script>
+    
+    <!-- Load managers -->
+    <script src="phaser/managers/ParticleManager.js"></script>
+    <script src="phaser/managers/AudioManager.js"></script>
+    <script src="phaser/managers/UIManager.js"></script>
+    
+    <!-- Load scenes -->
+    <script src="phaser/scenes/BootScene.js"></script>
+    <script src="phaser/scenes/MenuScene.js"></script>
+    <script src="phaser/scenes/GameScene.js"></script>
+    <script src="phaser/scenes/GameOverScene.js"></script>
+    
+    <!-- Load config after scenes are defined -->
+    <script src="phaser/config/GameConfig.js"></script>
+    
+    <!-- Load main game initialization last -->
+    <script src="phaser/main-phaser.js"></script>
 </body>
 </html> 
