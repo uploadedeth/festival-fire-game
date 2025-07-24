@@ -59,6 +59,9 @@ class GameScene extends Phaser.Scene {
             this.gameEnding = false;
             this.transitionInProgress = false;
             
+            // Record start time for play duration tracking
+            this.startTime = this.time.now;
+            
             // Create background
             this.createBackground();
             
@@ -86,35 +89,23 @@ class GameScene extends Phaser.Scene {
             // Camera effects
             this.setupCamera();
             
-            // Start ambient effects - DISABLED to remove background humming
-            // if (window.GameManagers.audio) {
-            //     try {
-            //         window.GameManagers.audio.startAmbientSound();
-            //     } catch (e) {
-            //         console.warn('Audio start error:', e);
-            //     }
-            // }
-            
             // Fade in from black
             this.cameras.main.fadeIn(1000, 0, 0, 0);
+            
+            // Dispatch game start event for authentication system
+            const gameStartEvent = new CustomEvent('gameStart', {
+                detail: {
+                    timestamp: Date.now(),
+                    gameMode: 'standard'
+                }
+            });
+            document.dispatchEvent(gameStartEvent);
             
             console.log('✅ GameScene created successfully');
             
         } catch (error) {
-            console.error('❌ Fatal error in GameScene.create():', error);
-            
-            // Emergency cleanup
-            this.gameEnding = true;
-            this.gameData.isActive = false;
-            
-            // Try to return to menu
-            this.time.delayedCall(1000, () => {
-                try {
-                    this.scene.start('MenuScene');
-                } catch (e) {
-                    console.error('Failed to return to menu after error:', e);
-                }
-            });
+            console.error('Failed to create GameScene:', error);
+            this.showError('Failed to start game. Please try again.');
         }
     }
     
@@ -543,6 +534,9 @@ class GameScene extends Phaser.Scene {
         console.log(`🏁 Game Over! Final Score: ${this.gameData.score}`);
         console.log('🏁 Showing Game Over Overlay...');
         
+        // Calculate victory condition
+        const victory = this.fires ? this.fires.children.entries.length === 0 : false;
+        
         // IMMEDIATE physics shutdown to prevent errors
         this.cleanupCollisions();
         
@@ -563,7 +557,6 @@ class GameScene extends Phaser.Scene {
         // Stop audio
         if (window.GameManagers.audio) {
             try {
-                // window.GameManagers.audio.stopAmbientSound(); // Disabled since we don't start ambient sound
                 window.GameManagers.audio.playGameOverSound();
             } catch (e) {
                 console.warn('Audio cleanup failed:', e);
@@ -578,6 +571,18 @@ class GameScene extends Phaser.Scene {
                 console.warn('UI cleanup failed:', e);
             }
         }
+        
+        // Dispatch game end event for authentication system
+        const gameEndEvent = new CustomEvent('gameEnd', {
+            detail: {
+                victory: victory,
+                score: this.gameData.score,
+                timeRemaining: this.gameData.timer,
+                firesExtinguished: this.gameSettings.maxFires - (this.fires ? this.fires.children.entries.length : 0),
+                totalPlayTime: this.getPlayTime()
+            }
+        });
+        document.dispatchEvent(gameEndEvent);
         
         // Show game over overlay
         this.showGameOverOverlay();
@@ -951,5 +956,12 @@ class GameScene extends Phaser.Scene {
             this.collisionObjects = [];
             console.log('✅ Collision objects cleared');
         }
+    }
+
+    getPlayTime() {
+        if (this.startTime) {
+            return this.time.now - this.startTime;
+        }
+        return 0;
     }
 } 

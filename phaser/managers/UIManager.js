@@ -14,9 +14,13 @@ class UIManager {
         this.currentFires = 0;
         this.isGameActive = false;
         
+        // Authentication UI state
+        this.userInfo = null;
+        this.isAuthenticated = false;
+        
         this.initializeUI();
         
-        console.log('📱 UI Manager initialized');
+        console.log('📱 UI Manager initialized with authentication support');
     }
     
     initializeUI() {
@@ -530,5 +534,154 @@ class UIManager {
         // Remove notifications
         const notifications = document.querySelectorAll('.game-notification');
         notifications.forEach(notification => notification.remove());
+    }
+
+    setUserInfo(userAuth) {
+        this.userInfo = userAuth;
+        this.isAuthenticated = userAuth.isAuthenticated;
+        
+        if (this.isAuthenticated) {
+            this.showUserWelcome();
+            this.createUserStatusElement();
+        }
+    }
+    
+    setUsername(username) {
+        this.username = username;
+        this.updateUserDisplay();
+    }
+    
+    showUserWelcome() {
+        if (!this.userInfo || !this.userInfo.username) return;
+        
+        // Create welcome message element
+        const welcomeElement = document.createElement('div');
+        welcomeElement.id = 'user-welcome';
+        welcomeElement.className = 'user-welcome';
+        welcomeElement.innerHTML = `
+            <div class="welcome-message">
+                <span class="welcome-text">Welcome, ${this.userInfo.username}!</span>
+                <span class="auth-status">✅ Authenticated</span>
+            </div>
+        `;
+        
+        // Add to game container
+        const gameContainer = document.getElementById('gameContainer');
+        if (gameContainer) {
+            gameContainer.appendChild(welcomeElement);
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                welcomeElement.style.opacity = '0';
+                setTimeout(() => {
+                    if (welcomeElement.parentNode) {
+                        welcomeElement.parentNode.removeChild(welcomeElement);
+                    }
+                }, 500);
+            }, 3000);
+        }
+    }
+    
+    createUserStatusElement() {
+        // Create persistent user status display
+        const statusElement = document.createElement('div');
+        statusElement.id = 'user-status';
+        statusElement.className = 'user-status';
+        statusElement.innerHTML = `
+            <div class="user-info">
+                <span class="username">${this.userInfo.username}</span>
+                <span class="auth-indicator">🔐</span>
+            </div>
+        `;
+        
+        // Add to UI overlay
+        const uiOverlay = document.getElementById('ui-overlay');
+        if (uiOverlay) {
+            uiOverlay.appendChild(statusElement);
+        }
+    }
+    
+    showAuthenticatedFeatures(show) {
+        // Show/hide features that require authentication
+        const authFeatures = document.querySelectorAll('.auth-required');
+        authFeatures.forEach(element => {
+            element.style.display = show ? 'block' : 'none';
+        });
+    }
+    
+    showAuthRequiredMessage() {
+        const messageElement = document.createElement('div');
+        messageElement.className = 'auth-required-message';
+        messageElement.innerHTML = `
+            <div class="auth-message">
+                <h3>🔐 Authentication Required</h3>
+                <p>Please log in to continue playing the game.</p>
+            </div>
+        `;
+        
+        const gameContainer = document.getElementById('gameContainer');
+        if (gameContainer) {
+            gameContainer.appendChild(messageElement);
+        }
+    }
+    
+    showScoreSavedMessage(scoreData) {
+        const messageElement = document.createElement('div');
+        messageElement.className = 'score-saved-message success';
+        messageElement.innerHTML = `
+            <div class="message-content">
+                <span class="icon">💾</span>
+                <span class="text">Score saved successfully!</span>
+                ${scoreData.ranking ? `<span class="ranking">Rank: #${scoreData.ranking}</span>` : ''}
+            </div>
+        `;
+        
+        this.showTemporaryMessage(messageElement, 3000);
+    }
+    
+    showScoreSaveError(error) {
+        const messageElement = document.createElement('div');
+        messageElement.className = 'score-saved-message error';
+        messageElement.innerHTML = `
+            <div class="message-content">
+                <span class="icon">❌</span>
+                <span class="text">Failed to save score: ${error}</span>
+            </div>
+        `;
+        
+        this.showTemporaryMessage(messageElement, 5000);
+    }
+    
+    showTemporaryMessage(element, duration) {
+        const gameContainer = document.getElementById('gameContainer');
+        if (gameContainer) {
+            gameContainer.appendChild(element);
+            
+            // Auto-hide after duration
+            setTimeout(() => {
+                element.style.opacity = '0';
+                setTimeout(() => {
+                    if (element.parentNode) {
+                        element.parentNode.removeChild(element);
+                    }
+                }, 500);
+            }, duration);
+        }
+    }
+    
+    setUserHighScores(highScores) {
+        // Store and potentially display user's high scores
+        this.userHighScores = highScores;
+        // Could update a leaderboard UI element here
+    }
+    
+    updateUserDisplay() {
+        const userStatusElement = document.getElementById('user-status');
+        if (userStatusElement && this.username) {
+            const usernameSpan = userStatusElement.querySelector('.username');
+            if (usernameSpan) {
+                usernameSpan.textContent = this.username;
+            }
+        }
     }
 } 

@@ -509,3 +509,149 @@ body.iframe-mode canvas {
         transform: translate(-50%, -50%) scale(0.8);
     }
 } 
+
+/* Authentication UI Styles */
+.user-welcome {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1001;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 8px;
+    padding: 10px 15px;
+    transition: opacity 0.5s ease;
+}
+
+.welcome-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.welcome-text {
+    color: #4CAF50;
+}
+
+.auth-status {
+    color: #4CAF50;
+    font-size: 12px;
+}
+
+.user-status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: white;
+    z-index: 100;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.username {
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+.auth-indicator {
+    font-size: 10px;
+}
+
+.auth-required-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    color: white;
+    z-index: 1000;
+}
+
+.auth-message h3 {
+    margin: 0 0 10px 0;
+    color: #ff6b6b;
+}
+
+.auth-message p {
+    margin: 0;
+    color: #ccc;
+}
+
+.score-saved-message {
+    position: absolute;
+    top: 80px;
+    right: 20px;
+    border-radius: 8px;
+    padding: 10px 15px;
+    z-index: 1001;
+    transition: opacity 0.5s ease;
+    max-width: 300px;
+}
+
+.score-saved-message.success {
+    background: rgba(76, 175, 80, 0.9);
+    color: white;
+}
+
+.score-saved-message.error {
+    background: rgba(244, 67, 54, 0.9);
+    color: white;
+}
+
+.message-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.message-content .icon {
+    font-size: 16px;
+}
+
+.message-content .ranking {
+    margin-left: auto;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* Authentication required elements */
+.auth-required {
+    display: none;
+}
+
+/* Iframe mode authentication adjustments */
+.iframe-mode .user-status {
+    top: 5px;
+    right: 5px;
+    font-size: 11px;
+    padding: 3px 8px;
+}
+
+.iframe-mode .user-welcome {
+    top: 10px;
+    right: 10px;
+    padding: 8px 12px;
+}
+
+.iframe-mode .score-saved-message {
+    top: 60px;
+    right: 10px;
+    padding: 8px 12px;
+} 
