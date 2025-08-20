@@ -50,7 +50,7 @@ class FestivalFireFighterGame {
             allowedOrigins: [
                 window.location.origin,
                 'https://your-nextjs-app.com', // Replace with your actual domain
-                'aethercade-app-cristianberbecaru-lord-team.vercel.app',
+                'https://aethercade-app-cristianberbecaru-lord-team.vercel.app',
                 'https://aethercade.com',
                 'http://localhost:3000', // For development
                 'https://localhost:3000' // For development with HTTPS
