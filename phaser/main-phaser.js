@@ -50,11 +50,13 @@ class FestivalFireFighterGame {
             allowedOrigins: [
                 window.location.origin,
                 'https://your-nextjs-app.com', // Replace with your actual domain
+                'aethercade-app-cristianberbecaru-lord-team.vercel.app',
+                'https://aethercade.com',
                 'http://localhost:3000', // For development
                 'https://localhost:3000' // For development with HTTPS
             ],
             sessionTimeout: 30 * 60 * 1000, // 30 minutes
-            maxScoreSubmissions: 10, // Per session
+            maxScoreSubmissions: 10000, // Per session
             requireAuthForPlay: this.debugMode ? false : true // In debug mode, allow anonymous play
         };
         
