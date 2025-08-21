@@ -139,9 +139,6 @@ class FestivalFireFighterGame {
             case 'LOGOUT_USER':
                 this.handleUserLogout();
                 break;
-            case 'PAUSE_GAME':
-                this.pause();
-                break;
             case 'RESUME_GAME':
                 this.resume();
                 break;
@@ -291,9 +288,8 @@ class FestivalFireFighterGame {
         // Trigger logout callbacks
         this.triggerAuthCallbacks('onLogout', previousAuth);
         
-        // If authentication is required for play, pause or reset game
+        // If authentication is required for play, reset game
         if (this.securityConfig.requireAuthForPlay && this.game) {
-            this.pause();
             this.showAuthRequiredMessage();
         }
         
@@ -870,17 +866,7 @@ class FestivalFireFighterGame {
         this.gameStartTime = Date.now();
     }
     
-    pause() {
-        if (this.game && this.game.scene.isActive('GameScene')) {
-            this.game.scene.pause('GameScene');
-        }
-    }
-    
-    resume() {
-        if (this.game && this.game.scene.isPaused('GameScene')) {
-            this.game.scene.resume('GameScene');
-        }
-    }
+
     
     destroy() {
         // Clear authentication timeouts
@@ -1129,13 +1115,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Handle page visibility changes
 document.addEventListener('visibilitychange', () => {
-    if (window.festivalFireGame && window.festivalFireGame.game) {
-        if (document.hidden) {
-            window.festivalFireGame.pause();
-        } else {
-            window.festivalFireGame.resume();
-        }
-    }
+    // Page visibility handling removed - no pause functionality
 });
 
 // Handle window resize
@@ -1148,8 +1128,6 @@ window.addEventListener('resize', () => {
 // Expose global functions for debugging
 window.debugGame = {
     restart: () => window.festivalFireGame.restart(),
-    pause: () => window.festivalFireGame.pause(),
-    resume: () => window.festivalFireGame.resume(),
     getGame: () => window.festivalFireGame.game,
     enablePhysicsDebug: () => {
         if (window.phaserGame && window.phaserGame.scene.isActive('GameScene')) {

@@ -196,7 +196,7 @@ class MenuScene extends Phaser.Scene {
         controlsContainer.add(controlsTitle);
         
         // Controls text
-        const controlsText = this.add.text(0, -5, 'A/D: Move\nSPACE: Water\nP: Pause', {
+        const controlsText = this.add.text(0, -5, 'A/D: Move\nSPACE: Water', {
             fontSize: '12px',
             fill: '#FFFFFF',
             fontFamily: 'Arial, sans-serif',

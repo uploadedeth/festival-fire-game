@@ -239,12 +239,6 @@ class GameScene extends Phaser.Scene {
     }
     
     setupInput() {
-        // Pause functionality
-        this.pauseKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
-        this.pauseKey.on('down', () => {
-            this.togglePause();
-        });
-        
         // Debug keys (remove in production)
         if (window.debugGame) {
             this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F1).on('down', () => {
@@ -837,19 +831,7 @@ class GameScene extends Phaser.Scene {
         }
     }
     
-    togglePause() {
-        if (this.scene.isPaused()) {
-            this.scene.resume();
-            if (window.GameManagers.ui) {
-                window.GameManagers.ui.hidePauseScreen();
-            }
-        } else {
-            this.scene.pause();
-            if (window.GameManagers.ui) {
-                window.GameManagers.ui.showPauseScreen();
-            }
-        }
-    }
+
     
     // Public method for fire spreading
     trySpawnFire(x, y, size = 'small') {

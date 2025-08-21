@@ -92,14 +92,6 @@ class UIManager {
     setupMobileControls() {
         if (this.elements.mobileControls) {
             this.elements.mobileControls.classList.remove('hidden');
-            
-            // Add pause button functionality
-            const pauseBtn = document.getElementById('pause-btn');
-            if (pauseBtn) {
-                pauseBtn.addEventListener('click', () => {
-                    this.togglePause();
-                });
-            }
         }
     }
     
@@ -349,72 +341,15 @@ class UIManager {
         }, duration);
     }
     
-    showPauseScreen() {
-        const pauseScreen = document.createElement('div');
-        pauseScreen.id = 'pause-screen-overlay';
-        pauseScreen.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        `;
-        
-        pauseScreen.innerHTML = `
-            <div style="text-align: center; color: white; font-family: Arial, sans-serif;">
-                <h1 style="font-size: 48px; margin-bottom: 20px;">⏸ PAUSED</h1>
-                <p style="font-size: 24px; margin-bottom: 30px;">Press P to resume or click Resume</p>
-                <button id="resume-btn" style="
-                    font-size: 20px;
-                    padding: 15px 30px;
-                    background: #ff6b6b;
-                    color: white;
-                    border: none;
-                    border-radius: 10px;
-                    cursor: pointer;
-                    font-weight: bold;
-                ">Resume Game</button>
-            </div>
-        `;
-        
-        document.body.appendChild(pauseScreen);
-        
-        // Add resume functionality
-        const resumeBtn = document.getElementById('resume-btn');
-        if (resumeBtn) {
-            resumeBtn.addEventListener('click', () => {
-                this.hidePauseScreen();
-                this.togglePause();
-            });
-        }
-    }
+
     
-    hidePauseScreen() {
-        const pauseScreen = document.getElementById('pause-screen-overlay');
-        if (pauseScreen) {
-            pauseScreen.remove();
-        }
-    }
+
     
-    togglePause() {
-        // Notify the game to pause/resume
-        if (window.phaserGame && window.phaserGame.scene.isActive('GameScene')) {
-            const gameScene = window.phaserGame.scene.getScene('GameScene');
-            if (gameScene.scene.isPaused()) {
-                gameScene.scene.resume();
-                this.hidePauseScreen();
-            } else {
-                gameScene.scene.pause();
-                this.showPauseScreen();
-            }
-        }
-    }
+
+    
+
+    
+
     
     showProgress(message, percentage) {
         // Show loading/progress indicator
@@ -516,7 +451,6 @@ class UIManager {
     destroy() {
         // Clean up any remaining UI elements
         const dynamicElements = [
-            'pause-screen-overlay',
             'progress-indicator'
         ];
         
