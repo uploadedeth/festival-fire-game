@@ -46,7 +46,14 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         this.originalScale = 1;
         this.flashTint = false;
         
-        // Input state
+        // Input state - separate mobile and keyboard states
+        this.mobileInputState = {
+            left: false,
+            right: false,
+            spray: false
+        };
+        
+        // Combined input state for processing
         this.inputState = {
             left: false,
             right: false,
@@ -59,6 +66,9 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
             maxSize: 30,
             runChildUpdate: true
         });
+        
+        // Store event listeners for proper cleanup
+        this.mobileEventListeners = {};
     }
     
     setupPhysics() {
@@ -129,52 +139,77 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
     }
     
     setupMobileControls() {
+        // Remove any existing listeners first to prevent duplicates
+        this.removeMobileControls();
+        
         // Connect to mobile UI buttons
         const moveLeft = document.getElementById('move-left');
         const moveRight = document.getElementById('move-right');
         const sprayWater = document.getElementById('spray-water');
         
+        // Create named functions for event listeners so we can remove them later
+        this.mobileEventListeners.leftStart = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.mobileInputState.left = true;
+            moveLeft.classList.add('pressed');
+        };
+        
+        this.mobileEventListeners.leftEnd = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.mobileInputState.left = false;
+            moveLeft.classList.remove('pressed');
+        };
+        
+        this.mobileEventListeners.rightStart = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.mobileInputState.right = true;
+            moveRight.classList.add('pressed');
+        };
+        
+        this.mobileEventListeners.rightEnd = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.mobileInputState.right = false;
+            moveRight.classList.remove('pressed');
+        };
+        
+        this.mobileEventListeners.sprayStart = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.mobileInputState.spray = true;
+            sprayWater.classList.add('pressed');
+        };
+        
+        this.mobileEventListeners.sprayEnd = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.mobileInputState.spray = false;
+            sprayWater.classList.remove('pressed');
+        };
+        
+        // Add event listeners
         if (moveLeft) {
-            moveLeft.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.inputState.left = true;
-                moveLeft.classList.add('pressed');
-            });
-            
-            moveLeft.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.inputState.left = false;
-                moveLeft.classList.remove('pressed');
-            });
+            moveLeft.addEventListener('touchstart', this.mobileEventListeners.leftStart);
+            moveLeft.addEventListener('touchend', this.mobileEventListeners.leftEnd);
+            moveLeft.addEventListener('touchcancel', this.mobileEventListeners.leftEnd);
         }
         
         if (moveRight) {
-            moveRight.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.inputState.right = true;
-                moveRight.classList.add('pressed');
-            });
-            
-            moveRight.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.inputState.right = false;
-                moveRight.classList.remove('pressed');
-            });
+            moveRight.addEventListener('touchstart', this.mobileEventListeners.rightStart);
+            moveRight.addEventListener('touchend', this.mobileEventListeners.rightEnd);
+            moveRight.addEventListener('touchcancel', this.mobileEventListeners.rightEnd);
         }
         
         if (sprayWater) {
-            sprayWater.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                this.inputState.spray = true;
-                sprayWater.classList.add('pressed');
-            });
-            
-            sprayWater.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.inputState.spray = false;
-                sprayWater.classList.remove('pressed');
-            });
+            sprayWater.addEventListener('touchstart', this.mobileEventListeners.sprayStart);
+            sprayWater.addEventListener('touchend', this.mobileEventListeners.sprayEnd);
+            sprayWater.addEventListener('touchcancel', this.mobileEventListeners.sprayEnd);
         }
+        
+        console.log('📱 Mobile controls set up');
     }
     
     createWaterBar() {
@@ -283,10 +318,10 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
     }
     
     handleInput() {
-        // Reset input state from keyboard first
-        const leftPressed = this.cursors.left.isDown || this.wasd.A.isDown;
-        const rightPressed = this.cursors.right.isDown || this.wasd.D.isDown;
-        const sprayPressed = this.spaceKey.isDown;
+        // Get keyboard input state
+        const leftKeyPressed = this.cursors.left.isDown || this.wasd.A.isDown;
+        const rightKeyPressed = this.cursors.right.isDown || this.wasd.D.isDown;
+        const sprayKeyPressed = this.spaceKey.isDown;
         
         // Test keys for different animation rows
         const testPressed = this.testKey.isDown;
@@ -310,15 +345,10 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
         this.testKeyYPressed = testYPressed;
         this.testKeyUPressed = testUPressed;
         
-        // Override with mobile controls if active
-        this.inputState.left = leftPressed || this.inputState.left;
-        this.inputState.right = rightPressed || this.inputState.right;
-        this.inputState.spray = sprayPressed || this.inputState.spray;
-        
-        // Reset mobile state after processing to prevent sticking
-        if (!leftPressed) this.inputState.left = false;
-        if (!rightPressed) this.inputState.right = false;
-        if (!sprayPressed) this.inputState.spray = false;
+        // Combine keyboard and mobile inputs (OR logic - either input source can trigger action)
+        this.inputState.left = leftKeyPressed || this.mobileInputState.left;
+        this.inputState.right = rightKeyPressed || this.mobileInputState.right;
+        this.inputState.spray = sprayKeyPressed || this.mobileInputState.spray;
     }
     
     updateMovement(delta) {
@@ -569,14 +599,33 @@ class Firefighter extends Phaser.Physics.Arcade.Sprite {
     }
     
     removeMobileControls() {
-        const buttons = ['move-left', 'move-right', 'spray-water'];
-        buttons.forEach(id => {
-            const button = document.getElementById(id);
-            if (button) {
-                button.removeEventListener('touchstart', () => {});
-                button.removeEventListener('touchend', () => {});
-                button.classList.remove('pressed');
-            }
-        });
+        const moveLeft = document.getElementById('move-left');
+        const moveRight = document.getElementById('move-right');
+        const sprayWater = document.getElementById('spray-water');
+        
+        // Remove event listeners using the stored references
+        if (moveLeft && this.mobileEventListeners.leftStart) {
+            moveLeft.removeEventListener('touchstart', this.mobileEventListeners.leftStart);
+            moveLeft.removeEventListener('touchend', this.mobileEventListeners.leftEnd);
+            moveLeft.removeEventListener('touchcancel', this.mobileEventListeners.leftEnd);
+            moveLeft.classList.remove('pressed');
+        }
+        
+        if (moveRight && this.mobileEventListeners.rightStart) {
+            moveRight.removeEventListener('touchstart', this.mobileEventListeners.rightStart);
+            moveRight.removeEventListener('touchend', this.mobileEventListeners.rightEnd);
+            moveRight.removeEventListener('touchcancel', this.mobileEventListeners.rightEnd);
+            moveRight.classList.remove('pressed');
+        }
+        
+        if (sprayWater && this.mobileEventListeners.sprayStart) {
+            sprayWater.removeEventListener('touchstart', this.mobileEventListeners.sprayStart);
+            sprayWater.removeEventListener('touchend', this.mobileEventListeners.sprayEnd);
+            sprayWater.removeEventListener('touchcancel', this.mobileEventListeners.sprayEnd);
+            sprayWater.classList.remove('pressed');
+        }
+        
+        // Clear the stored references
+        this.mobileEventListeners = {};
     }
 } 
