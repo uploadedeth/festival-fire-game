@@ -52,6 +52,7 @@ class FestivalFireFighterGame {
                 'https://your-nextjs-app.com', // Replace with your actual domain
                 'https://aethercade-app-cristianberbecaru-lord-team.vercel.app',
                 'https://aethercade.com',
+                'https://www.aethercade.com',
                 'http://localhost:3000', // For development
                 'https://localhost:3000' // For development with HTTPS
             ],
